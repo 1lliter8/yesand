@@ -1,0 +1,55 @@
+[tool.poetry]
+name = "yesand"
+version = "0.1.0"
+description = ""
+authors = ["Will Langdale <willdon@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+django = "^5.1.1"
+django-bootstrap5 = "^24.3"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.6.8"
+pytest = "^8.3.3"
+poethepoet = "^0.29.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length = 88
+indent-width = 4
+target-version = "py312"
+exclude = ["yesand/migrations"]
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "F",
+    "I",
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.format]
+quote-style = "single"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.django-admin]
+settings_module = "config.settings"
+
+[tool.poe.tasks]
+test = "pytest -v"
+_check = "ruff check . --fix"
+_format = "ruff format"
+format = ["_check", "_format"]
+_makemigrations = "python manage.py makemigrations"
+_migrate = "python manage.py migrate"
+migrate = ["_makemigrations", "_migrate"]
+run = "python manage.py runserver"
