@@ -1,6 +1,6 @@
 from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import get_object_or_404, render
 
 from .models import Dir, Prompt
 
@@ -90,4 +90,31 @@ def add_dir(request: HttpRequest) -> HttpResponse:
         dir_name = request.POST.get('dir_name')
         parent_dir = Dir.objects.get(id=parent_id) if parent_id else None
         _ = Dir.objects.create(dir=parent_dir, display=dir_name)
-        return redirect('index')
+
+        # Get the updated filesystem
+        filesystem = get_filesystem()
+
+        return render(
+            request=request,
+            template_name='index.html',
+            context={
+                'filesystem': filesystem,
+            },
+        )
+
+
+def delete_dir(request: HttpRequest, dir_id: int) -> HttpResponse:
+    if request.method == 'POST':
+        _dir = get_object_or_404(Dir, id=dir_id)
+        _dir.delete()
+
+        # Get the updated filesystem
+        filesystem = get_filesystem()
+
+        return render(
+            request=request,
+            template_name='index.html',
+            context={
+                'filesystem': filesystem,
+            },
+        )

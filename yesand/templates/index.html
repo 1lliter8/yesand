@@ -25,7 +25,14 @@
             </main>
         </div>
     </div>
-    {% for item in filesystem %}
-        {% include "modals/add_dir.html" with item=item %}
-    {% endfor %}
+    {% include "modals/load_modals.html" with filesystem=filesystem %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Reinitialize modals
+            var modalElements = document.querySelectorAll('.modal');
+            modalElements.forEach(function (modalElement) {
+                new bootstrap.Modal(modalElement);
+            });
+        });
+    </script>
 {% endblock %}
