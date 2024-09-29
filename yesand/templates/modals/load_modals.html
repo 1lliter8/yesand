@@ -1,9 +1,12 @@
 {% for item in filesystem %}
-    {% include "modals/add_dir.html" with item=item %}
-    {% include "modals/delete_dir.html" with item=item %}
-    {% include "modals/rename_dir.html" with item=item %}
-    {% include "modals/copy_dir.html" with item=item %}
-    {% include "modals/move_dir.html" with item=item filesystem=filesystem dirs=dirs%}
+    {% if item.type == 'dir' %}
+        {% include "modals/add_dir.html" with item=item %}
+        {% include "modals/delete_dir.html" with item=item %}
+        {% include "modals/rename_dir.html" with item=item %}
+        {% include "modals/copy_dir.html" with item=item %}
+        {% include "modals/move_dir.html" with item=item filesystem=filesystem dirs=dirs%}
+        {% include "modals/add_prompt.html" with item=item %}
+    {% endif %}
     {% if item.children %}
         {% include "modals/load_modals.html" with filesystem=item.children dirs=dirs%}
     {% endif %}

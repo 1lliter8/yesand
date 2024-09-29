@@ -5,45 +5,35 @@ from django.shortcuts import get_object_or_404, render
 from .models import AIModel, Dir, Prompt
 
 
-def get_filesystem() -> list[dict]:
+def get_filesystem(parent: Dir = None, level: int = 0) -> list[dict]:
     """Extracts the filesystem structure from the database."""
-
-    def get_tree(parent: Dir = None, level: int = 0) -> list[dict]:
-        tree = []
-        dirs = Dir.objects.filter(dir=parent)
-        for _dir in dirs:
-            dir_data = {
-                'type': 'dir',
-                'display': _dir.display,
-                'level': level,
-                'id': _dir.id,
-                'children': get_tree(parent=_dir, level=level + 1),
-            }
-            prompts = Prompt.objects.filter(dir=_dir)
-            for prompt in prompts:
-                dir_data['children'].append(
-                    {
-                        'type': 'prompt',
-                        'display': prompt.display,
-                        'id': _dir.id,
-                        'level': level + 1,
-                    }
-                )
-            tree.append(dir_data)
-        return tree
-
-    root_dirs = Dir.objects.filter(dir__isnull=True)
     tree = []
-    for root_dir in root_dirs:
-        tree.append(
-            {
-                'type': 'dir',
-                'display': root_dir.display,
-                'level': 0,
-                'id': root_dir.id,
-                'children': get_tree(parent=root_dir, level=1),
-            }
-        )
+    dirs = Dir.objects.filter(dir=parent)
+    for _dir in dirs:
+        dir_data = {
+            'type': 'dir',
+            'display': _dir.display,
+            'level': level,
+            'id': _dir.id,
+            'children': [],
+        }
+
+        # Recursively get children directories
+        dir_data['children'].extend(get_filesystem(parent=_dir, level=level + 1))
+
+        # Add prompts as children
+        prompts = Prompt.objects.filter(dir=_dir)
+        for prompt in prompts:
+            dir_data['children'].append(
+                {
+                    'type': 'prompt',
+                    'display': prompt.display,
+                    'id': prompt.id,  # Changed from _dir.id to prompt.id
+                    'level': level + 1,
+                }
+            )
+        tree.append(dir_data)
+
     return tree
 
 
@@ -89,6 +79,30 @@ def load_prompts(request: HttpRequest, dir_id: int) -> HttpResponse:
             'dirs': dirs,
         },
     )
+
+
+def add_prompt(request: HttpRequest) -> HttpResponse:
+    """Add a prompt to a directory."""
+    if request.method == 'POST':
+        display_name = request.POST.get('prompt_display')
+        dir_id = request.POST.get('dir_id')
+        _dir = get_object_or_404(Dir, id=dir_id)
+        _ = Prompt.objects.create(display=display_name, dir=_dir)
+
+        # Get the updated filesystem
+        filesystem = get_filesystem()
+        dirs = Dir.objects.all()
+
+        return render(
+            request=request,
+            template_name='index.html',
+            context={
+                'filesystem': filesystem,
+                'dirs': dirs,
+            },
+        )
+
+    return HttpResponse(status=405)
 
 
 def add_dir(request: HttpRequest) -> HttpResponse:

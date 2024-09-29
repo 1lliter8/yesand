@@ -1,0 +1,22 @@
+<!-- Add Prompt Modal -->
+<div class="modal fade" id="addPromptModal-{{ item.id }}" tabindex="-1" aria-labelledby="addPromptModalLabel-{{ item.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addPromptModalLabel-{{ item.id }}">Add new prompt</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{% url 'add_prompt' %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="prompt_display_{{ item.id }}" class="form-label">Prompt display name</label>
+                        <input type="text" class="form-control" id="prompt_display_{{ item.id }}" name="prompt_display" required>
+                    </div>
+                    <input type="hidden" name="dir_id" value="{{ item.id }}">
+                    <button type="submit" class="btn btn-primary">Add prompt</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
