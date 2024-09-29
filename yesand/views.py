@@ -14,7 +14,7 @@ def get_filesystem() -> list[dict]:
         for _dir in dirs:
             dir_data = {
                 'type': 'dir',
-                'name': _dir.display,
+                'display': _dir.display,
                 'level': level,
                 'id': _dir.id,
                 'children': get_tree(parent=_dir, level=level + 1),
@@ -24,7 +24,7 @@ def get_filesystem() -> list[dict]:
                 dir_data['children'].append(
                     {
                         'type': 'prompt',
-                        'name': prompt.display,
+                        'display': prompt.display,
                         'id': _dir.id,
                         'level': level + 1,
                     }
@@ -38,7 +38,7 @@ def get_filesystem() -> list[dict]:
         tree.append(
             {
                 'type': 'dir',
-                'name': root_dir.display,
+                'display': root_dir.display,
                 'level': 0,
                 'id': root_dir.id,
                 'children': get_tree(parent=root_dir, level=1),
@@ -50,11 +50,14 @@ def get_filesystem() -> list[dict]:
 def index(request: HttpRequest) -> HttpResponse:
     """Render the index page."""
     filesystem = get_filesystem()
+    dirs = Dir.objects.all()
+
     return render(
         request=request,
         template_name='index.html',
         context={
             'filesystem': filesystem,
+            'dirs': dirs,
         },
     )
 
@@ -74,6 +77,7 @@ def load_prompts(request: HttpRequest, dir_id: int) -> HttpResponse:
     collect_prompts(_dir)
 
     filesystem = get_filesystem()
+    dirs = Dir.objects.all()
 
     return render(
         request=request,
@@ -82,6 +86,7 @@ def load_prompts(request: HttpRequest, dir_id: int) -> HttpResponse:
             'prompts': all_prompts,
             'dir_name': _dir.display,
             'filesystem': filesystem,
+            'dirs': dirs,
         },
     )
 
@@ -96,12 +101,14 @@ def add_dir(request: HttpRequest) -> HttpResponse:
 
         # Get the updated filesystem
         filesystem = get_filesystem()
+        dirs = Dir.objects.all()
 
         return render(
             request=request,
             template_name='index.html',
             context={
                 'filesystem': filesystem,
+                'dirs': dirs,
             },
         )
 
@@ -114,12 +121,14 @@ def delete_dir(request: HttpRequest, dir_id: int) -> HttpResponse:
 
         # Get the updated filesystem
         filesystem = get_filesystem()
+        dirs = Dir.objects.all()
 
         return render(
             request=request,
             template_name='index.html',
             context={
                 'filesystem': filesystem,
+                'dirs': dirs,
             },
         )
 
@@ -134,12 +143,14 @@ def rename_dir(request: HttpRequest, dir_id: int) -> HttpResponse:
 
         # Get the updated filesystem
         filesystem = get_filesystem()
+        dirs = Dir.objects.all()
 
         return render(
             request=request,
             template_name='index.html',
             context={
                 'filesystem': filesystem,
+                'dirs': dirs,
             },
         )
 
@@ -176,11 +187,41 @@ def copy_dir(request: HttpRequest, dir_id: int) -> HttpResponse:
 
         # Get the updated filesystem
         filesystem = get_filesystem()
+        dirs = Dir.objects.all()
 
         return render(
             request=request,
             template_name='index.html',
             context={
                 'filesystem': filesystem,
+                'dirs': dirs,
+            },
+        )
+
+
+def move_dir(request: HttpRequest, dir_id: int) -> HttpResponse:
+    """Move a directory to a new parent directory."""
+    if request.method == 'POST':
+        new_parent_id = request.POST.get('new_parent_dir_id')
+        new_parent_dir = (
+            None
+            if new_parent_id == 'None'
+            else get_object_or_404(Dir, id=new_parent_id)
+        )
+
+        _dir = get_object_or_404(Dir, id=dir_id)
+        _dir.dir = new_parent_dir
+        _dir.save()
+
+        # Get the updated filesystem
+        filesystem = get_filesystem()
+        dirs = Dir.objects.all()
+
+        return render(
+            request=request,
+            template_name='index.html',
+            context={
+                'filesystem': filesystem,
+                'dirs': dirs,
             },
         )

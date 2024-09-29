@@ -3,7 +3,8 @@
     {% include "modals/delete_dir.html" with item=item %}
     {% include "modals/rename_dir.html" with item=item %}
     {% include "modals/copy_dir.html" with item=item %}
+    {% include "modals/move_dir.html" with item=item filesystem=filesystem dirs=dirs%}
     {% if item.children %}
-        {% include "modals/load_modals.html" with filesystem=item.children %}
+        {% include "modals/load_modals.html" with filesystem=item.children dirs=dirs%}
     {% endif %}
 {% endfor %}

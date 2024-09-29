@@ -1,0 +1,29 @@
+<!-- Move Directory Modal -->
+<div class="modal fade" id="moveDirectoryModal-{{ item.id }}" tabindex="-1" aria-labelledby="moveDirectoryModalLabel-{{ item.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="moveDirectoryModalLabel-{{ item.id }}">Move directory</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{% url 'move_dir' item.id %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="new_parent_dir_{{ item.id }}" class="form-label">New parent directory</label>
+                        <select class="form-select" id="new_parent_dir_{{ item.id }}" name="new_parent_dir_id" required>
+                            <option value="">Select a directory for {{ item.display }}</option>
+                            <option value="None">No parent (move to root)</option>
+                            {% for dir in dirs %}
+                                {% if dir.id != item.id %}
+                                    <option value="{{ dir.id }}">{{ dir.display }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Move directory</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

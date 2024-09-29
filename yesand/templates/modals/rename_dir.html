@@ -11,7 +11,7 @@
                     {% csrf_token %}
                     <div class="mb-3">
                         <label for="new_dir_name_{{ item.id }}" class="form-label">New directory name</label>
-                        <input type="text" class="form-control" id="new_dir_name_{{ item.id }}" name="new_dir_name" value="{{ item.name }}" required>
+                        <input type="text" class="form-control" id="new_dir_name_{{ item.id }}" name="new_dir_name" value="{{ item.display }}" required>
                     </div>
                     <button type="submit" class="btn btn-primary">Rename directory</button>
                 </form>

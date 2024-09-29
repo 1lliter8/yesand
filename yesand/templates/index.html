@@ -25,7 +25,7 @@
             </main>
         </div>
     </div>
-    {% include "modals/load_modals.html" with filesystem=filesystem %}
+    {% include "modals/load_modals.html" with filesystem=filesystem dirs=dirs%}
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             // Reinitialize modals
