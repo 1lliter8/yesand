@@ -21,3 +21,5 @@ yes& wants to be simple to deploy, simple to work with, and simple to query. It'
 This Django project is managed using [poetry](https://python-poetry.org), and is linted and formatted with [ruff](https://docs.astral.sh/ruff/).
 
 Task running is done with [poethepoet](https://poethepoet.natn.io/index.html). Run `poe` to see what's implemented.
+
+Currently themed with [Pulse](https://bootswatch.com/pulse/) from Bootswatch but that can change.
