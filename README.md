@@ -1,4 +1,4 @@
-# yes&
+# ![yes&](static/images/logo.svg)
 
 A lightweight, minimal prompt database and webapp that aims to keep you creative.
 
@@ -9,6 +9,12 @@ yes& wants to be simple to deploy, simple to work with, and simple to query. It'
 * Minimal prompt storage overhead
 * Flexible, enabling prompt organisation
 * Serve prompts via API
+
+## To do
+
+- [ ] Editable prompt cards
+- [ ] Add AIModel to file tree
+- [ ] Add API to return prompts selected at any dir depth for max flexibility
 
 ## Development
 
