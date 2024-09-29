@@ -1,6 +1,7 @@
 {% load bootstrap_icons %}
 {% load mathfilters %}
 
+<!-- Filesystem item -->
 <li class="list-group-item bg-transparent p-0">
     <div class="d-flex justify-content-between align-items-center position-relative w-100 ps-{{ level|default:0|add:2 }} pe-5 py-2">
         <div class="d-flex align-items-center overflow-hidden">
@@ -50,26 +51,3 @@
         </ul>
     {% endif %}
 </li>
-
-<!-- Add new directory modal -->
-<div class="modal fade" id="addDirectoryModal-{{ item.id }}" tabindex="-1" aria-labelledby="addDirectoryModalLabel-{{ item.id }}" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addDirectoryModalLabel-{{ item.id }}">Add new directory</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form method="POST" action="{% url 'add_dir' %}">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <label for="dir_name_{{ item.id }}" class="form-label">Directory name</label>
-                        <input type="text" class="form-control" id="dir_name_{{ item.id }}" name="dir_name" required>
-                    </div>
-                    <input type="hidden" name="parent_dir_id" value="{{ item.id }}">
-                    <button type="submit" class="btn btn-primary">Add directory</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>

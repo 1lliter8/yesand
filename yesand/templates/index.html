@@ -25,4 +25,7 @@
             </main>
         </div>
     </div>
+    {% for item in filesystem %}
+        {% include "modals/add_dir.html" with item=item %}
+    {% endfor %}
 {% endblock %}
