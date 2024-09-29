@@ -1,4 +1,4 @@
-# ![yes&](static/images/logo.svg)
+# <img src="static/images/logo.svg" alt="yes&" width="200" height="200">
 
 A lightweight, minimal prompt database and webapp that aims to keep you creative.
 
