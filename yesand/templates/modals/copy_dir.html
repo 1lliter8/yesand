@@ -1,0 +1,18 @@
+<!-- Copy Directory Modal -->
+<div class="modal fade" id="copyDirectoryModal-{{ item.id }}" tabindex="-1" aria-labelledby="copyDirectoryModalLabel-{{ item.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="copyDirectoryModalLabel-{{ item.id }}">Copy directory</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{% url 'copy_dir' item.id %}">
+                    {% csrf_token %}
+                    <p>Are you sure you want to copy this directory and all its contents?</p>
+                    <button type="submit" class="btn btn-primary">Copy directory</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

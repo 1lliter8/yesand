@@ -10,4 +10,5 @@ urlpatterns = [
     path('add-dir/', views.add_dir, name='add_dir'),
     path('delete_dir/<int:dir_id>/', views.delete_dir, name='delete_dir'),
     path('rename_dir/<int:dir_id>/', views.rename_dir, name='rename_dir'),
+    path('copy_dir/<int:dir_id>/', views.copy_dir, name='copy_dir'),
 ]

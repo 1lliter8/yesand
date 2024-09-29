@@ -2,7 +2,7 @@ from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, render
 
-from .models import Dir, Prompt
+from .models import AIModel, Dir, Prompt
 
 
 def get_filesystem() -> list[dict]:
@@ -48,6 +48,7 @@ def get_filesystem() -> list[dict]:
 
 
 def index(request: HttpRequest) -> HttpResponse:
+    """Render the index page."""
     filesystem = get_filesystem()
     return render(
         request=request,
@@ -59,6 +60,7 @@ def index(request: HttpRequest) -> HttpResponse:
 
 
 def load_prompts(request: HttpRequest, dir_id: int) -> HttpResponse:
+    """Load all prompts in a directory and its children."""
     _dir = get_object_or_404(Dir, id=dir_id)
     all_prompts = []
 
@@ -85,6 +87,7 @@ def load_prompts(request: HttpRequest, dir_id: int) -> HttpResponse:
 
 
 def add_dir(request: HttpRequest) -> HttpResponse:
+    """Add a directory."""
     if request.method == 'POST':
         parent_id = request.POST.get('parent_dir_id')
         dir_name = request.POST.get('dir_name')
@@ -104,6 +107,7 @@ def add_dir(request: HttpRequest) -> HttpResponse:
 
 
 def delete_dir(request: HttpRequest, dir_id: int) -> HttpResponse:
+    """Delete a directory."""
     if request.method == 'POST':
         _dir = get_object_or_404(Dir, id=dir_id)
         _dir.delete()
@@ -121,11 +125,54 @@ def delete_dir(request: HttpRequest, dir_id: int) -> HttpResponse:
 
 
 def rename_dir(request: HttpRequest, dir_id: int) -> HttpResponse:
+    """Rename a directory."""
     if request.method == 'POST':
         new_dir_name = request.POST.get('new_dir_name')
         _dir = get_object_or_404(Dir, id=dir_id)
         _dir.display = new_dir_name
         _dir.save()
+
+        # Get the updated filesystem
+        filesystem = get_filesystem()
+
+        return render(
+            request=request,
+            template_name='index.html',
+            context={
+                'filesystem': filesystem,
+            },
+        )
+
+
+def copy_dir(request: HttpRequest, dir_id: int) -> HttpResponse:
+    """Copy a directory and its contents."""
+    if request.method == 'POST':
+        original_dir = get_object_or_404(Dir, id=dir_id)
+        parent_dir = original_dir.dir
+
+        def copy_directory(original: Dir, parent: Dir = None) -> Dir:
+            new_dir = Dir.objects.create(dir=parent, display=original.display)
+
+            # Copy Prompts
+            for prompt in original.prompts.all():
+                new_prompt = Prompt.objects.create(
+                    display=prompt.display, text=prompt.text, dir=new_dir
+                )
+                new_prompt.aimodels.set(prompt.aimodels.all())
+                new_prompt.fields.set(prompt.fields.all())
+                new_prompt.save()
+
+            # Copy AIModels
+            for aimodel in original.aimodels.all():
+                AIModel.objects.create(display=aimodel.display, dir=new_dir)
+
+            # Recursively copy child directories
+            for child in original.children.all():
+                copy_directory(child, new_dir)
+
+            return new_dir
+
+        copy_directory(original_dir, parent_dir)
 
         # Get the updated filesystem
         filesystem = get_filesystem()
