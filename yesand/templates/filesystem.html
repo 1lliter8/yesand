@@ -1,0 +1,22 @@
+{% load bootstrap_icons %}
+
+{% for item in items %}
+    {% if item.type == 'dir' %}
+        <li class="list-group-item bg-transparent ms-{{ item.level }}">
+            <a href="{% url 'load_prompts' item.id %}" class="text-decoration-none d-flex align-items-center">
+                {% bs_icon 'folder' extra_classes='me-2' %} {{ item.name }}
+            </a>
+            {% if item.children %}
+                <ul class="list-group">
+                    {% include "filesystem.html" with items=item.children %}
+                </ul>
+            {% endif %}
+        </li>
+    {% else %}
+        <li class="list-group-item bg-transparent prompt ms-{{ item.level }}">
+            <span class="d-flex align-items-center">
+                {% bs_icon 'pen' extra_classes='me-2' %} {{ item.name }}
+            </span>
+        </li>
+    {% endif %}
+{% endfor %}

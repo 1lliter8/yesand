@@ -9,6 +9,9 @@ readme = "README.md"
 python = "^3.12"
 django = "^5.1.1"
 django-bootstrap5 = "^24.3"
+django-admin-interface = "^0.28.9"
+django-bootstrap-icons = "^0.9.0"
+django-mathfilters = "^1.0.0"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.6.8"
@@ -30,6 +33,9 @@ select = [
     "E",
     "F",
     "I",
+    "A",
+    "DJ",
+    "TCH",
 ]
 
 [tool.ruff.lint.pydocstyle]
@@ -45,11 +51,31 @@ line-ending = "auto"
 settings_module = "config.settings"
 
 [tool.poe.tasks]
-test = "pytest -v"
 _check = "ruff check . --fix"
 _format = "ruff format"
-format = ["_check", "_format"]
 _makemigrations = "python manage.py makemigrations"
 _migrate = "python manage.py migrate"
-migrate = ["_makemigrations", "_migrate"]
-run = "python manage.py runserver"
+
+[tool.poe.tasks.test]
+cmd = "pytest -v"
+help = "Run tests with pytest"
+
+[tool.poe.tasks.format]
+sequence = ["_check", "_format"]
+help = "Run code formatting checks and fixes with ruff"
+
+[tool.poe.tasks.migrate]
+sequence = ["_makemigrations", "_migrate"]
+help = "Run Django database migrations"
+
+[tool.poe.tasks.run]
+cmd = "python manage.py runserver"
+help = "Run the Django development server"
+
+[tool.poe.tasks.createsuperuser]
+cmd = "python manage.py createsuperuser --username ${username} --email ${email}"
+args = [
+  { name = "username", default = "admin" },
+  { name = "email", default = "admin@yesand.uk" },
+]
+help = "Create a Django superuser"

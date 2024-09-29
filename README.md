@@ -9,3 +9,9 @@ yes& wants to be simple to deploy, simple to work with, and simple to query. It'
 * Minimal prompt storage overhead
 * Flexible, enabling prompt organisation
 * Serve prompts via API
+
+## Development
+
+This Django project is managed using [poetry](https://python-poetry.org), and is linted and formatted with [ruff](https://docs.astral.sh/ruff/).
+
+Task running is done with [poethepoet](https://poethepoet.natn.io/index.html). Run `poe` to see what's implemented.
