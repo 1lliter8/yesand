@@ -118,3 +118,22 @@ def delete_dir(request: HttpRequest, dir_id: int) -> HttpResponse:
                 'filesystem': filesystem,
             },
         )
+
+
+def rename_dir(request: HttpRequest, dir_id: int) -> HttpResponse:
+    if request.method == 'POST':
+        new_dir_name = request.POST.get('new_dir_name')
+        _dir = get_object_or_404(Dir, id=dir_id)
+        _dir.display = new_dir_name
+        _dir.save()
+
+        # Get the updated filesystem
+        filesystem = get_filesystem()
+
+        return render(
+            request=request,
+            template_name='index.html',
+            context={
+                'filesystem': filesystem,
+            },
+        )

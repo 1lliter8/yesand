@@ -26,7 +26,7 @@
                     {% if item.type == 'dir' %}
                         <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#addDirectoryModal-{{ item.id }}">{% bs_icon 'plus' extra_classes='me-2' %} Add new child directory</a></li>
                         <li><a class="dropdown-item" href="#">{% bs_icon 'file-earmark-plus' extra_classes='me-2' %} Create new prompt</a></li>
-                        <li><a class="dropdown-item" href="#">{% bs_icon 'pencil' extra_classes='me-2' %} Rename directory</a></li>
+                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#renameDirectoryModal-{{ item.id }}">{% bs_icon 'pencil' extra_classes='me-2' %} Rename directory</a></li>
                         <li><a class="dropdown-item" href="#">{% bs_icon 'layers' extra_classes='me-2' %} Copy directory</a></li>
                         <li><a class="dropdown-item" href="#">{% bs_icon 'arrow-return-right' extra_classes='me-2' %} Move directory</a></li>
                         <li><hr class="dropdown-divider"></li>

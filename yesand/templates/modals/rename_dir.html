@@ -1,0 +1,21 @@
+<!-- Rename Directory Modal -->
+<div class="modal fade" id="renameDirectoryModal-{{ item.id }}" tabindex="-1" aria-labelledby="renameDirectoryModalLabel-{{ item.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="renameDirectoryModalLabel-{{ item.id }}">Rename directory</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{% url 'rename_dir' item.id %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="new_dir_name_{{ item.id }}" class="form-label">New directory name</label>
+                        <input type="text" class="form-control" id="new_dir_name_{{ item.id }}" name="new_dir_name" value="{{ item.name }}" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Rename directory</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

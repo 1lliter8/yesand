@@ -9,4 +9,5 @@ urlpatterns = [
     path('prompts/<int:dir_id>/', views.load_prompts, name='load_prompts'),
     path('add-dir/', views.add_dir, name='add_dir'),
     path('delete_dir/<int:dir_id>/', views.delete_dir, name='delete_dir'),
+    path('rename_dir/<int:dir_id>/', views.rename_dir, name='rename_dir'),
 ]
