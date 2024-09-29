@@ -1,6 +1,6 @@
 from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 
 from .models import Dir, Prompt
 
@@ -82,3 +82,12 @@ def load_prompts(request: HttpRequest, dir_id: int) -> HttpResponse:
             'filesystem': filesystem,
         },
     )
+
+
+def add_dir(request: HttpRequest) -> HttpResponse:
+    if request.method == 'POST':
+        parent_id = request.POST.get('parent_dir_id')
+        dir_name = request.POST.get('dir_name')
+        parent_dir = Dir.objects.get(id=parent_id) if parent_id else None
+        _ = Dir.objects.create(dir=parent_dir, display=dir_name)
+        return redirect('index')

@@ -1,24 +1,75 @@
 {% load bootstrap_icons %}
+{% load mathfilters %}
 
-<ul class="list-group">
-{% for item in items %}
-    {% if item.type == 'dir' %}
-        <li class="list-group-item bg-transparent ms-{{ item.level }}">
-            <a href="{% url 'load_prompts' item.id %}" class="text-decoration-none d-flex align-items-center">
-                {% bs_icon 'folder' extra_classes='me-2' %} {{ item.name }}
-            </a>
-            {% if item.children %}
-                <ul class="list-group">
-                    {% include "filesystem.html" with items=item.children %}
-                </ul>
+<li class="list-group-item bg-transparent p-0">
+    <div class="d-flex justify-content-between align-items-center position-relative w-100 ps-{{ level|default:0|add:2 }} pe-5 py-2">
+        <div class="d-flex align-items-center overflow-hidden">
+            {% if item.type == 'dir' %}
+                <a href="{% url 'load_prompts' item.id %}" class="text-decoration-none d-flex align-items-center text-truncate">
+                    {% bs_icon 'folder' extra_classes='me-2 flex-shrink-0' %} 
+                    <span class="text-truncate">{{ item.name }}</span>
+                </a>
+            {% else %}
+                <span class="text-secondary d-flex align-items-center text-truncate">
+                    {% bs_icon 'file-earmark' extra_classes='me-2 flex-shrink-0' %} 
+                    <span class="text-truncate">{{ item.name }}</span>
+                </span>
             {% endif %}
-        </li>
-    {% else %}
-        <li class="list-group-item bg-transparent ms-{{ item.level }}">
-            <span class="text-decoration-none d-flex align-items-center text-secondary">
-                {% bs_icon 'pen' extra_classes='me-2' %} {{ item.name }}
-            </span>
-        </li>
+        </div>
+        <div class="position-absolute end-0 me-2">
+            <div class="dropdown">
+                <button class="btn btn-sm" type="button" id="dropdownMenuButton-{{ item.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                    {% bs_icon 'chevron-down' %}
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton-{{ item.id }}">
+                    {% if item.type == 'dir' %}
+                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#addDirectoryModal-{{ item.id }}">{% bs_icon 'plus' extra_classes='me-2' %} Add new child directory</a></li>
+                        <li><a class="dropdown-item" href="#">{% bs_icon 'file-earmark-plus' extra_classes='me-2' %} Create new prompt</a></li>
+                        <li><a class="dropdown-item" href="#">{% bs_icon 'pencil' extra_classes='me-2' %} Rename directory</a></li>
+                        <li><a class="dropdown-item" href="#">{% bs_icon 'layers' extra_classes='me-2' %} Copy directory</a></li>
+                        <li><a class="dropdown-item" href="#">{% bs_icon 'arrow-return-right' extra_classes='me-2' %} Move directory</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="#">{% bs_icon 'trash' extra_classes='me-2' %} Delete directory</a></li>
+                    {% else %}
+                        <li><a class="dropdown-item" href="#">{% bs_icon 'layers' extra_classes='me-2' %} Copy prompt</a></li>
+                        <li><a class="dropdown-item" href="#">{% bs_icon 'arrow-return-right' extra_classes='me-2' %} Move prompt</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="#">{% bs_icon 'trash' extra_classes='me-2' %} Delete prompt</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    {% if item.children %}
+        <ul class="list-group">
+            {% for child in item.children %}
+                {% with level=level|add:1 %}
+                    {% include "filesystem.html" with item=child %}
+                {% endwith %}
+            {% endfor %}
+        </ul>
     {% endif %}
-{% endfor %}
-</ul>
+</li>
+
+<!-- Add new directory modal -->
+<div class="modal fade" id="addDirectoryModal-{{ item.id }}" tabindex="-1" aria-labelledby="addDirectoryModalLabel-{{ item.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addDirectoryModalLabel-{{ item.id }}">Add new directory</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{% url 'add_dir' %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="dir_name_{{ item.id }}" class="form-label">Directory name</label>
+                        <input type="text" class="form-control" id="dir_name_{{ item.id }}" name="dir_name" required>
+                    </div>
+                    <input type="hidden" name="parent_dir_id" value="{{ item.id }}">
+                    <button type="submit" class="btn btn-primary">Add directory</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

@@ -53,8 +53,12 @@ settings_module = "config.settings"
 [tool.poe.tasks]
 _check = "ruff check . --fix"
 _format = "ruff format"
-_makemigrations = "python manage.py makemigrations"
-_migrate = "python manage.py migrate"
+_makemigrations = "poetry run python manage.py makemigrations"
+_migrate = "poetry run python manage.py migrate"
+_resetmigrations="find yesand/migrations -type f ! -name '__init__.py' -delete"
+_resetdb = "rm -rf db.sqlite3"
+_bootstrap_admin = "poetry run python manage.py loaddata admin_interface_theme_bootstrap.json"
+_add_default_project = "poetry run python manage.py add_default_dir"
 
 [tool.poe.tasks.test]
 cmd = "pytest -v"
@@ -69,13 +73,25 @@ sequence = ["_makemigrations", "_migrate"]
 help = "Run Django database migrations"
 
 [tool.poe.tasks.run]
-cmd = "python manage.py runserver"
+cmd = "poetry run python manage.py runserver"
 help = "Run the Django development server"
 
 [tool.poe.tasks.createsuperuser]
-cmd = "python manage.py createsuperuser --username ${username} --email ${email}"
+cmd = "poetry run python manage.py createsuperuser --username ${username} --email ${email}"
 args = [
   { name = "username", default = "admin" },
   { name = "email", default = "admin@yesand.uk" },
 ]
 help = "Create a Django superuser"
+
+[tool.poe.tasks.reset]
+sequence = [
+  "_resetmigrations", 
+  "_resetdb", 
+  "_makemigrations",
+  "_migrate",
+  "_add_default_project",
+  "_bootstrap_admin", 
+  "createsuperuser"
+]
+help = "Reset the database, migrate, reskin admin, add a default project, make a new superuser."

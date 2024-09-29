@@ -139,6 +139,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 BOOTSTRAP5 = {
     'theme_url': 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/pulse/bootstrap.min.css',
     'color_mode': 'dark',
+    'javascript_in_head': True,
 }
 
 # Options for the admin interface

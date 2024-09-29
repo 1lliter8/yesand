@@ -20,17 +20,18 @@ class Dir(models.Model):
 
 
 class AIModel(models.Model):
-    name = models.CharField(max_length=255)
+    display = models.CharField(max_length=255)
+    dir = models.ForeignKey(Dir, on_delete=models.CASCADE, related_name='aimodels')
 
     def __str__(self):
-        return self.name
+        return self.display
 
 
 class Field(models.Model):
-    template = models.TextField()
+    template = models.CharField(max_length=255)
 
     def __str__(self):
-        return f'Field {self.id}'
+        return f'Field {self.template}'
 
 
 class Prompt(models.Model):

@@ -3,17 +3,21 @@
 
 {% block bootstrap5_content %}
     <div class="container-fluid">
-        <div class="row">
+        <div class="row mt-3">
             <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block sidebar vh-100 overflow-auto">
                 <div class="position-sticky">
-                    {% include "filesystem.html" with items=filesystem %}
+                    <ul class="list-group">
+                        {% for item in filesystem %}
+                            {% include "filesystem.html" with item=item level=0 %}
+                        {% endfor %}
+                    </ul>
                 </div>
             </nav>
             <main id="main-pane" class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
                 {% if prompts %}
                     {% include "prompt.html" %}
                 {% else %}
-                    <div class="mt-3">
+                    <div>
                         <h1>Welcome</h1>
                         <p>Select a directory or file to view its prompts.</p>
                     </div>

@@ -7,4 +7,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.index, name='index'),
     path('prompts/<int:dir_id>/', views.load_prompts, name='load_prompts'),
+    path('add-dir/', views.add_dir, name='add_dir'),
 ]
