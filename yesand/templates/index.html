@@ -4,19 +4,19 @@
 {% block bootstrap5_content %}
     <div class="container-fluid">
         <div class="row">
-            <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block bg-light sidebar vh-100 overflow-auto">
+            <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block sidebar vh-100 overflow-auto">
                 <div class="position-sticky">
-                    <ul class="list-group">
-                        {% include "filesystem.html" with items=filesystem %}
-                    </ul>
+                    {% include "filesystem.html" with items=filesystem %}
                 </div>
             </nav>
             <main id="main-pane" class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
                 {% if prompts %}
                     {% include "prompt.html" %}
                 {% else %}
-                    <h1>Welcome</h1>
-                    <p>Select a directory or file to view its prompts.</p>
+                    <div class="mt-3">
+                        <h1>Welcome</h1>
+                        <p>Select a directory or file to view its prompts.</p>
+                    </div>
                 {% endif %}
             </main>
         </div>

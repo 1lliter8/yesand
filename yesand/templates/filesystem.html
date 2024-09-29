@@ -1,5 +1,6 @@
 {% load bootstrap_icons %}
 
+<ul class="list-group">
 {% for item in items %}
     {% if item.type == 'dir' %}
         <li class="list-group-item bg-transparent ms-{{ item.level }}">
@@ -13,10 +14,11 @@
             {% endif %}
         </li>
     {% else %}
-        <li class="list-group-item bg-transparent prompt ms-{{ item.level }}">
-            <span class="d-flex align-items-center">
+        <li class="list-group-item bg-transparent ms-{{ item.level }}">
+            <span class="text-decoration-none d-flex align-items-center text-secondary">
                 {% bs_icon 'pen' extra_classes='me-2' %} {{ item.name }}
             </span>
         </li>
     {% endif %}
 {% endfor %}
+</ul>
