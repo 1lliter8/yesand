@@ -4,8 +4,12 @@
         {% include "modals/delete_dir.html" with item=item %}
         {% include "modals/rename_dir.html" with item=item %}
         {% include "modals/copy_dir.html" with item=item %}
-        {% include "modals/move_dir.html" with item=item filesystem=filesystem dirs=dirs%}
+        {% include "modals/move_dir.html" with item=item dirs=dirs%}
         {% include "modals/add_prompt.html" with item=item %}
+    {% elif item.type == 'prompt' %}
+        {% include "modals/delete_prompt.html" with item=item %}
+        {% include "modals/copy_prompt.html" with item=item %}
+        {% include "modals/move_prompt.html" with item=item dirs=dirs %}
     {% endif %}
     {% if item.children %}
         {% include "modals/load_modals.html" with filesystem=item.children dirs=dirs%}

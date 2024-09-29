@@ -1,0 +1,28 @@
+<!-- Move Prompt Modal -->
+<div class="modal fade" id="movePromptModal-{{ item.id }}" tabindex="-1" aria-labelledby="movePromptModalLabel-{{ item.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="movePromptModalLabel-{{ item.id }}">Move Prompt</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{% url 'move_prompt' item.id %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="new_dir_{{ item.id }}" class="form-label">New Directory</label>
+                        <select class="form-select" id="new_dir_{{ item.id }}" name="new_dir_id" required>
+                            <option value="">Select a directory for {{ item.display }}</option>
+                            {% for dir in dirs %}
+                                {% if dir.id != item.dir %}
+                                    <option value="{{ dir.id }}">{{ dir.display }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Move Prompt</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

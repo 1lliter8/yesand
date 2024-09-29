@@ -28,7 +28,8 @@ def get_filesystem(parent: Dir = None, level: int = 0) -> list[dict]:
                 {
                     'type': 'prompt',
                     'display': prompt.display,
-                    'id': prompt.id,  # Changed from _dir.id to prompt.id
+                    'dir': _dir.id,
+                    'id': prompt.id,
                     'level': level + 1,
                 }
             )
@@ -79,30 +80,6 @@ def load_prompts(request: HttpRequest, dir_id: int) -> HttpResponse:
             'dirs': dirs,
         },
     )
-
-
-def add_prompt(request: HttpRequest) -> HttpResponse:
-    """Add a prompt to a directory."""
-    if request.method == 'POST':
-        display_name = request.POST.get('prompt_display')
-        dir_id = request.POST.get('dir_id')
-        _dir = get_object_or_404(Dir, id=dir_id)
-        _ = Prompt.objects.create(display=display_name, dir=_dir)
-
-        # Get the updated filesystem
-        filesystem = get_filesystem()
-        dirs = Dir.objects.all()
-
-        return render(
-            request=request,
-            template_name='index.html',
-            context={
-                'filesystem': filesystem,
-                'dirs': dirs,
-            },
-        )
-
-    return HttpResponse(status=405)
 
 
 def add_dir(request: HttpRequest) -> HttpResponse:
@@ -226,6 +203,97 @@ def move_dir(request: HttpRequest, dir_id: int) -> HttpResponse:
         _dir = get_object_or_404(Dir, id=dir_id)
         _dir.dir = new_parent_dir
         _dir.save()
+
+        # Get the updated filesystem
+        filesystem = get_filesystem()
+        dirs = Dir.objects.all()
+
+        return render(
+            request=request,
+            template_name='index.html',
+            context={
+                'filesystem': filesystem,
+                'dirs': dirs,
+            },
+        )
+
+
+def add_prompt(request: HttpRequest) -> HttpResponse:
+    """Add a prompt to a directory."""
+    if request.method == 'POST':
+        display_name = request.POST.get('prompt_display')
+        dir_id = request.POST.get('dir_id')
+        _dir = get_object_or_404(Dir, id=dir_id)
+        _ = Prompt.objects.create(display=display_name, dir=_dir)
+
+        # Get the updated filesystem
+        filesystem = get_filesystem()
+        dirs = Dir.objects.all()
+
+        return render(
+            request=request,
+            template_name='index.html',
+            context={
+                'filesystem': filesystem,
+                'dirs': dirs,
+            },
+        )
+
+    return HttpResponse(status=405)
+
+
+def copy_prompt(request: HttpRequest, prompt_id: int) -> HttpResponse:
+    """Copy a prompt to a new directory."""
+    if request.method == 'POST':
+        prompt = get_object_or_404(Prompt, id=prompt_id)
+
+        # Create a copy of the prompt
+        prompt.pk = None
+        prompt.save()
+
+        # Get the updated filesystem
+        filesystem = get_filesystem()
+        dirs = Dir.objects.all()
+
+        return render(
+            request=request,
+            template_name='index.html',
+            context={
+                'filesystem': filesystem,
+                'dirs': dirs,
+            },
+        )
+
+
+def move_prompt(request: HttpRequest, prompt_id: int) -> HttpResponse:
+    """Move a prompt to a new directory."""
+    if request.method == 'POST':
+        new_dir_id = request.POST.get('new_dir_id')
+        new_dir = get_object_or_404(Dir, id=new_dir_id)
+
+        prompt = get_object_or_404(Prompt, id=prompt_id)
+        prompt.dir = new_dir
+        prompt.save()
+
+        # Get the updated filesystem
+        filesystem = get_filesystem()
+        dirs = Dir.objects.all()
+
+        return render(
+            request=request,
+            template_name='index.html',
+            context={
+                'filesystem': filesystem,
+                'dirs': dirs,
+            },
+        )
+
+
+def delete_prompt(request: HttpRequest, prompt_id: int) -> HttpResponse:
+    """Delete a prompt."""
+    if request.method == 'POST':
+        prompt = get_object_or_404(Prompt, id=prompt_id)
+        prompt.delete()
 
         # Get the updated filesystem
         filesystem = get_filesystem()

@@ -1,0 +1,18 @@
+<!-- Copy Prompt Modal -->
+<div class="modal fade" id="copyPromptModal-{{ item.id }}" tabindex="-1" aria-labelledby="copyPromptModalLabel-{{ item.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="copyPromptModalLabel-{{ item.id }}">Copy Prompt</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{% url 'copy_prompt' item.id %}">
+                    {% csrf_token %}
+                    <p>Are you sure you want to copy this prompt?</p>
+                    <button type="submit" class="btn btn-primary">Copy Prompt</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
