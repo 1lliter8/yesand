@@ -1,34 +1,60 @@
 {% extends 'django_bootstrap5/bootstrap5.html' %}
-
-{% block bootstrap5_title %}{% block title %}Prompt database | yes&{% endblock %}{% endblock %}
-
+{% block bootstrap5_title %}
+    {% block title %}Prompt database | yes&{% endblock %}
+{% endblock %}
 {% load django_bootstrap5 %}
 {% load bootstrap_icons %}
 {% load static %}
-
 {% block bootstrap5_extra_head %}
-<link rel="icon" href="{% static 'images/logo.svg' %}" type="image/svg+xml">
+    <link rel="icon" href="{% static 'images/logo.svg' %}" type="image/svg+xml">
 {% endblock %}
-
 {% block bootstrap5_before_content %}
-<nav class="navbar navbar-expand-lg bg-primary">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="/">
-            <img src="{% static 'images/logo.svg' %}" alt="Logo" height="50">
-        </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarColor01"
-            aria-controls="navbarColor01" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarColor01">
-            <ul class="navbar-nav me-auto">
-                <li class="nav-item">
-                    <a class="nav-link active" href="/">Projects
-                        <span class="visually-hidden">(current)</span>
-                    </a>
-                </li>
-            </ul>
+    <nav class="navbar navbar-expand-lg bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <img src="{% static 'images/logo.svg' %}"
+                     alt="Logo"
+                     height="50"
+                     width="50">
+            </a>
+            <button class="navbar-toggler"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#navbarColor01"
+                    aria-controls="navbarColor01"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarColor01">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/">Projects
+                            <span class="visually-hidden">(current)</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
         </div>
-    </div>
-</nav>
+    </nav>
+{% endblock %}
+{% block bootstrap5_extra_script %}
+    <script src="https://unpkg.com/htmx.org@2.0.2"></script>
+    <script>
+    document.body.addEventListener('htmx:configRequest', (event) => {
+      event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
+    })
+    </script>
+    {% block extra_js %}
+    {% endblock extra_js %}
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        htmx.onLoad(function(content) {
+            var dropdowns = content.querySelectorAll('[data-bs-toggle="dropdown"]');
+            dropdowns.forEach(function(dropdownToggle) {
+                new bootstrap.Dropdown(dropdownToggle);
+            });
+        })
+    });
+    </script>
 {% endblock %}

@@ -1,18 +1,27 @@
-<!-- Copy Directory Modal -->
-<div class="modal fade" id="copyDirectoryModal-{{ item.id }}" tabindex="-1" aria-labelledby="copyDirectoryModalLabel-{{ item.id }}" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="copyDirectoryModalLabel-{{ item.id }}">Copy directory</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form method="POST" action="{% url 'copy_dir' item.id %}">
-                    {% csrf_token %}
-                    <p>Are you sure you want to copy this directory and all its contents?</p>
-                    <button type="submit" class="btn btn-primary">Copy directory</button>
-                </form>
-            </div>
-        </div>
-    </div>
+<!-- Copy Directory Modal Content -->
+<div class="modal-header">
+    <h5 class="modal-title">Copy Directory</h5>
+    <button type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="Close"></button>
 </div>
+<form hx-post="{% url 'dir' %}"
+      hx-target="#filesystem"
+      hx-swap="outerHTML"
+      hx-trigger="submit"
+      hx-indicator="#copy-dir-spinner">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="copy">
+    <input type="hidden" name="dir_id" value="{{ dir_id }}">
+    <div class="modal-body">
+        <p>Are you sure you want to copy this directory and all its contents?</p>
+    </div>
+    <div class="modal-footer">
+        <span id="copy-dir-spinner"
+              class="spinner-border spinner-border-sm htmx-indicator"
+              role="status"
+              aria-hidden="true"></span>
+        <button type="submit" class="btn btn-primary">Copy Directory</button>
+    </div>
+</form>

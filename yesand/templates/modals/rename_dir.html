@@ -1,21 +1,35 @@
-<!-- Rename Directory Modal -->
-<div class="modal fade" id="renameDirectoryModal-{{ item.id }}" tabindex="-1" aria-labelledby="renameDirectoryModalLabel-{{ item.id }}" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="renameDirectoryModalLabel-{{ item.id }}">Rename directory</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form method="POST" action="{% url 'rename_dir' item.id %}">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <label for="new_dir_name_{{ item.id }}" class="form-label">New directory name</label>
-                        <input type="text" class="form-control" id="new_dir_name_{{ item.id }}" name="new_dir_name" value="{{ item.display }}" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Rename directory</button>
-                </form>
-            </div>
+<!-- Rename Directory Modal Content -->
+<div class="modal-header">
+    <h5 class="modal-title">Rename Directory</h5>
+    <button type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="Close"></button>
+</div>
+<form hx-post="{% url 'dir' %}"
+      hx-target="#filesystem"
+      hx-swap="outerHTML"
+      hx-trigger="submit"
+      hx-indicator="#rename-dir-spinner">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="rename">
+    <input type="hidden" name="dir_id" value="{{ dir_id }}">
+    <div class="modal-body">
+        <div class="mb-3">
+            <label for="new_dir_name" class="form-label">New directory name</label>
+            <input type="text"
+                   class="form-control"
+                   id="new_dir_name"
+                   name="new_dir_name"
+                   value="{{ dir.display }}"
+                   required>
         </div>
     </div>
-</div>
+    <div class="modal-footer">
+        <span id="rename-dir-spinner"
+              class="spinner-border spinner-border-sm htmx-indicator"
+              role="status"
+              aria-hidden="true"></span>
+        <button type="submit" class="btn btn-primary">Rename Directory</button>
+    </div>
+</form>

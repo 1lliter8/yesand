@@ -5,16 +5,8 @@ from yesand import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', views.index, name='index'),
-    path('prompts/<int:dir_id>/', views.load_prompts, name='load_prompts'),
-    path('add_dir/', views.add_dir, name='add_dir'),
-    path('delete_dir/<int:dir_id>/', views.delete_dir, name='delete_dir'),
-    path('rename_dir/<int:dir_id>/', views.rename_dir, name='rename_dir'),
-    path('copy_dir/<int:dir_id>/', views.copy_dir, name='copy_dir'),
-    path('move_dir/<int:dir_id>/', views.move_dir, name='move_dir'),
-    path('add_prompt/', views.add_prompt, name='add_prompt'),
-    path('add_prompt/', views.add_prompt, name='add_prompt'),
-    path('delete_prompt/<int:prompt_id>', views.delete_prompt, name='delete_prompt'),
-    path('copy_prompt/<int:prompt_id>', views.copy_prompt, name='copy_prompt'),
-    path('move_prompt/<int:prompt_id>/', views.move_prompt, name='move_prompt'),
+    path('', views.ProjectView.as_view(), name='index'),
+    path('prompts/<int:dir_id>/', views.LoadPromptsView.as_view(), name='load_prompts'),
+    path('dir/', views.DirView.as_view(), name='dir'),
+    path('prompt/', views.PromptView.as_view(), name='prompt'),
 ]

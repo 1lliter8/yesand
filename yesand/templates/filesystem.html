@@ -1,53 +1,113 @@
 {% load bootstrap_icons %}
 {% load mathfilters %}
-
-<!-- Filesystem item -->
-<li class="list-group-item bg-transparent p-0">
-    <div class="d-flex justify-content-between align-items-center position-relative w-100 ps-{{ level|default:0|add:2 }} pe-5 py-2">
-        <div class="d-flex align-items-center overflow-hidden">
-            {% if item.type == 'dir' %}
-                <a href="{% url 'load_prompts' item.id %}" class="text-decoration-none d-flex align-items-center text-truncate">
-                    {% bs_icon 'folder' extra_classes='me-2 flex-shrink-0' %} 
-                    <span class="text-truncate">{{ item.display }}</span>
-                </a>
-            {% else %}
-                <span class="text-secondary d-flex align-items-center text-truncate">
-                    {% bs_icon 'file-earmark' extra_classes='me-2 flex-shrink-0' %} 
-                    <span class="text-truncate">{{ item.display }}</span>
-                </span>
-            {% endif %}
+{% if level == 0 %}<div id="filesystem">{% endif %}
+    <ul class="list-group">
+        {% for item in filesystem %}
+            <li class="list-group-item bg-transparent p-0">
+                <div class="d-flex justify-content-between align-items-center position-relative w-100 ps-{{ level|add:2 }} pe-5 py-2">
+                    <div class="d-flex align-items-center overflow-hidden">
+                        {% if item.type == 'dir' %}
+                            <a href="#"
+                               class="text-decoration-none d-flex align-items-center text-truncate"
+                               hx-get="{% url 'load_prompts' item.id %}"
+                               hx-target="#main-project-content"
+                               hx-push-url="true">
+                                {% bs_icon 'folder' extra_classes='me-2 flex-shrink-0' %}
+                                <span class="text-truncate">{{ item.display }}</span>
+                            </a>
+                        {% else %}
+                            <span class="text-secondary d-flex align-items-center text-truncate">
+                                {% bs_icon 'chat' extra_classes='me-2 flex-shrink-0' %}
+                                <span class="text-truncate">{{ item.display }}</span>
+                            </span>
+                        {% endif %}
+                    </div>
+                    <div class="position-absolute end-0 me-2">
+                        <div class="dropdown">
+                            <button class="btn btn-sm"
+                                    type="button"
+                                    id="dropdownMenuButton-{{ item.id }}"
+                                    data-bs-toggle="dropdown"
+                                    aria-expanded="false">{% bs_icon 'chevron-down' %}</button>
+                            <ul class="dropdown-menu dropdown-menu-end"
+                                aria-labelledby="dropdownMenuButton-{{ item.id }}">
+                                {% if item.type == 'dir' %}
+                                    <li>
+                                        <a class="dropdown-item"
+                                           href="#"
+                                           hx-get="{% url 'dir' %}?action=add&parent_id={{ item.id }}"
+                                           hx-target="#modal-content">{% bs_icon 'plus' extra_classes='me-2' %} Add new child directory</a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item"
+                                           href="#"
+                                           hx-get="{% url 'prompt' %}?action=add&dir_id={{ item.id }}"
+                                           hx-target="#modal-content">{% bs_icon 'chat-dots' extra_classes='me-2' %} Create new prompt</a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item"
+                                           href="#"
+                                           hx-get="{% url 'dir' %}?action=rename&dir_id={{ item.id }}"
+                                           hx-target="#modal-content">{% bs_icon 'pencil' extra_classes='me-2' %} Rename directory</a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item"
+                                           href="#"
+                                           hx-get="{% url 'dir' %}?action=copy&dir_id={{ item.id }}"
+                                           hx-target="#modal-content">{% bs_icon 'layers' extra_classes='me-2' %} Copy directory</a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item"
+                                           href="#"
+                                           hx-get="{% url 'dir' %}?action=move&dir_id={{ item.id }}"
+                                           hx-target="#modal-content">{% bs_icon 'arrow-return-right' extra_classes='me-2' %} Move directory</a>
+                                    </li>
+                                    <li>
+                                        <hr class="dropdown-divider">
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item text-danger"
+                                           href="#"
+                                           hx-get="{% url 'dir' %}?action=delete&dir_id={{ item.id }}"
+                                           hx-target="#modal-content">{% bs_icon 'trash' extra_classes='me-2' %} Delete directory</a>
+                                    </li>
+                                {% else %}
+                                    <li>
+                                        <a class="dropdown-item"
+                                           href="#"
+                                           hx-get="{% url 'prompt' %}?action=copy&prompt_id={{ item.id }}"
+                                           hx-target="#modal-content">{% bs_icon 'layers' extra_classes='me-2' %} Copy prompt</a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item"
+                                           href="#"
+                                           hx-get="{% url 'prompt' %}?action=move&prompt_id={{ item.id }}"
+                                           hx-target="#modal-content">{% bs_icon 'arrow-return-right' extra_classes='me-2' %} Move prompt</a>
+                                    </li>
+                                    <li>
+                                        <hr class="dropdown-divider">
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item text-danger"
+                                           href="#"
+                                           hx-get="{% url 'prompt' %}?action=delete&prompt_id={{ item.id }}"
+                                           hx-target="#modal-content">{% bs_icon 'trash' extra_classes='me-2' %} Delete prompt</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                {% include 'filesystem.html' with filesystem=item.children level=level|add:1 %}
+            </li>
+        {% endfor %}
+    </ul>
+    {% if level == 0 %}
+        <hr class="mt-3 mb-0" />
+        <div class="d-flex justify-content-center my-1">
+            <button class="btn btn-sm"
+                    hx-get="{% url 'dir' %}?action=add"
+                    hx-target="#modal-content">{% bs_icon 'plus' extra_classes='me-2' %}</button>
         </div>
-        <div class="position-absolute end-0 me-2">
-            <div class="dropdown">
-                <button class="btn btn-sm" type="button" id="dropdownMenuButton-{{ item.id }}" data-bs-toggle="dropdown" aria-expanded="false">
-                    {% bs_icon 'chevron-down' %}
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton-{{ item.id }}">
-                    {% if item.type == 'dir' %}
-                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#addDirectoryModal-{{ item.id }}">{% bs_icon 'plus' extra_classes='me-2' %} Add new child directory</a></li>
-                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#addPromptModal-{{ item.id }}">{% bs_icon 'file-earmark-plus' extra_classes='me-2' %} Create new prompt</a></li>
-                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#renameDirectoryModal-{{ item.id }}">{% bs_icon 'pencil' extra_classes='me-2' %} Rename directory</a></li>
-                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#copyDirectoryModal-{{ item.id }}">{% bs_icon 'layers' extra_classes='me-2' %} Copy directory</a></li>
-                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#moveDirectoryModal-{{ item.id }}">{% bs_icon 'arrow-return-right' extra_classes='me-2' %} Move directory</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#deleteDirectoryModal-{{ item.id }}">{% bs_icon 'trash' extra_classes='me-2' %} Delete directory</a></li>
-                    {% else %}
-                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#copyPromptModal-{{ item.id }}">{% bs_icon 'layers' extra_classes='me-2' %} Copy prompt</a></li>
-                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#movePromptModal-{{ item.id }}">{% bs_icon 'arrow-return-right' extra_classes='me-2' %} Move prompt</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-danger" href="#"data-bs-toggle="modal" data-bs-target="#deletePromptModal-{{ item.id }}">{% bs_icon 'trash' extra_classes='me-2' %} Delete prompt</a></li>
-                    {% endif %}
-                </ul>
-            </div>
-        </div>
-    </div>
-    {% if item.children %}
-        <ul class="list-group">
-            {% for child in item.children %}
-                {% with level=level|add:1 %}
-                    {% include "filesystem.html" with item=child %}
-                {% endwith %}
-            {% endfor %}
-        </ul>
     {% endif %}
-</li>
+    {% if level == 0 %}</div>{% endif %}

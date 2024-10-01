@@ -17,6 +17,7 @@ django-mathfilters = "^1.0.0"
 ruff = "^0.6.8"
 pytest = "^8.3.3"
 poethepoet = "^0.29.0"
+djlint = "^1.35.2"
 
 [build-system]
 requires = ["poetry-core"]
@@ -53,6 +54,7 @@ settings_module = "config.settings"
 [tool.poe.tasks]
 _check = "ruff check . --fix"
 _format = "ruff format"
+_djangoformat = "djlint . --reformat --quiet"
 _makemigrations = "poetry run python manage.py makemigrations"
 _migrate = "poetry run python manage.py migrate"
 _resetmigrations="find yesand/migrations -type f ! -name '__init__.py' -delete"
@@ -65,8 +67,8 @@ cmd = "pytest -v"
 help = "Run tests with pytest"
 
 [tool.poe.tasks.format]
-sequence = ["_check", "_format"]
-help = "Run code formatting checks and fixes with ruff"
+sequence = ["_check", "_format", "_djangoformat"]
+help = "Run code formatting checks and fixes with ruff and djLint"
 
 [tool.poe.tasks.migrate]
 sequence = ["_makemigrations", "_migrate"]

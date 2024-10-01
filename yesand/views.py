@@ -1,6 +1,8 @@
 from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, render
+from django.template.loader import render_to_string
+from django.views import View
 
 from .models import AIModel, Dir, Prompt
 
@@ -17,11 +19,7 @@ def get_filesystem(parent: Dir = None, level: int = 0) -> list[dict]:
             'id': _dir.id,
             'children': [],
         }
-
-        # Recursively get children directories
         dir_data['children'].extend(get_filesystem(parent=_dir, level=level + 1))
-
-        # Add prompts as children
         prompts = Prompt.objects.filter(dir=_dir)
         for prompt in prompts:
             dir_data['children'].append(
@@ -34,128 +32,153 @@ def get_filesystem(parent: Dir = None, level: int = 0) -> list[dict]:
                 }
             )
         tree.append(dir_data)
-
     return tree
 
 
-def index(request: HttpRequest) -> HttpResponse:
-    """Render the index page."""
-    filesystem = get_filesystem()
-    dirs = Dir.objects.all()
-
-    return render(
-        request=request,
-        template_name='index.html',
-        context={
-            'filesystem': filesystem,
-            'dirs': dirs,
-        },
-    )
-
-
-def load_prompts(request: HttpRequest, dir_id: int) -> HttpResponse:
-    """Load all prompts in a directory and its children."""
-    _dir = get_object_or_404(Dir, id=dir_id)
-    all_prompts = []
-
-    def collect_prompts(_dir: Dir) -> QuerySet[Prompt]:
-        children_dirs = Dir.objects.filter(dir=_dir)
-        for child_dir in children_dirs:
-            collect_prompts(child_dir)
-        child_prompts = Prompt.objects.filter(dir=_dir)
-        all_prompts.extend(child_prompts)
-
-    collect_prompts(_dir)
-
-    filesystem = get_filesystem()
-    dirs = Dir.objects.all()
-
-    return render(
-        request=request,
-        template_name='index.html',
-        context={
-            'prompts': all_prompts,
-            'dir_name': _dir.display,
-            'filesystem': filesystem,
-            'dirs': dirs,
-        },
-    )
+class ProjectView(View):
+    def get(self, request: HttpRequest) -> HttpResponse:
+        filesystem = get_filesystem()
+        dirs = Dir.objects.all()
+        return render(
+            request,
+            'projects.html',
+            {
+                'filesystem': filesystem,
+                'dirs': dirs,
+            },
+        )
 
 
-def add_dir(request: HttpRequest) -> HttpResponse:
-    """Add a directory."""
-    if request.method == 'POST':
+class LoadPromptsView(View):
+    def get(self, request: HttpRequest, dir_id: int) -> HttpResponse:
+        _dir = get_object_or_404(Dir, id=dir_id)
+        all_prompts = self.get_all_prompts(_dir)
+
+        return render(
+            request,
+            'prompt.html',
+            {
+                'prompts': all_prompts,
+                'dir_name': _dir.display,
+            },
+        )
+
+    def get_all_prompts(self, _dir: Dir) -> QuerySet[Prompt]:
+        return Prompt.objects.filter(
+            dir__in=Dir.objects.get(id=_dir.id).get_descendants(include_self=True)
+        )
+
+
+class DirView(View):
+    def get(self, request: HttpRequest) -> HttpResponse:
+        action = request.GET.get('action')
+        if action == 'add':
+            return self.add_dir_form(request)
+        elif action == 'delete':
+            return self.delete_dir_form(request)
+        elif action == 'rename':
+            return self.rename_dir_form(request)
+        elif action == 'copy':
+            return self.copy_dir_form(request)
+        elif action == 'move':
+            return self.move_dir_form(request)
+        else:
+            return HttpResponse('Invalid action', status=400)
+
+    def post(self, request: HttpRequest) -> HttpResponse:
+        action = request.POST.get('action')
+        if action == 'add':
+            return self.add_dir(request)
+        elif action == 'delete':
+            return self.delete_dir(request)
+        elif action == 'rename':
+            return self.rename_dir(request)
+        elif action == 'copy':
+            return self.copy_dir(request)
+        elif action == 'move':
+            return self.move_dir(request)
+        else:
+            return HttpResponse('Invalid action', status=400)
+
+    def add_dir_form(self, request: HttpRequest) -> HttpResponse:
+        """Renders the form to add a new directory."""
+        parent_id = request.GET.get('parent_id', None)
+        html = render_to_string(
+            'modals/add_dir.html', {'parent_id': parent_id}, request=request
+        )
+        return HttpResponse(html)
+
+    def delete_dir_form(self, request: HttpRequest) -> HttpResponse:
+        """Renders the form to delete a directory."""
+        dir_id = request.GET.get('dir_id')
+        html = render_to_string(
+            'modals/delete_dir.html', {'dir_id': dir_id}, request=request
+        )
+        return HttpResponse(html)
+
+    def rename_dir_form(self, request: HttpRequest) -> HttpResponse:
+        """Renders the form to rename a directory."""
+        dir_id = request.GET.get('dir_id')
+        html = render_to_string(
+            'modals/rename_dir.html', {'dir_id': dir_id}, request=request
+        )
+        return HttpResponse(html)
+
+    def copy_dir_form(self, request: HttpRequest) -> HttpResponse:
+        """Renders the form to copy a directory."""
+        dir_id = request.GET.get('dir_id')
+        html = render_to_string(
+            'modals/copy_dir.html', {'dir_id': dir_id}, request=request
+        )
+        return HttpResponse(html)
+
+    def move_dir_form(self, request: HttpRequest) -> HttpResponse:
+        """Renders the form to move a directory."""
+        dir_id = request.GET.get('dir_id')
+        valid_dirs = Dir.objects.exclude(id=dir_id)
+        html = render_to_string(
+            'modals/move_dir.html',
+            {'dir_id': dir_id, 'valid_dirs': valid_dirs},
+            request=request,
+        )
+        return HttpResponse(html)
+
+    def add_dir(self, request: HttpRequest) -> HttpResponse:
+        """Adds a new directory to the filesystem."""
         parent_id = request.POST.get('parent_dir_id')
         dir_name = request.POST.get('dir_name')
+
+        if parent_id == 'None':
+            parent_id = None
+
         parent_dir = Dir.objects.get(id=parent_id) if parent_id else None
-        _ = Dir.objects.create(dir=parent_dir, display=dir_name)
+        Dir.objects.create(dir=parent_dir, display=dir_name)
+        return self.render_filesystem(request)
 
-        # Get the updated filesystem
-        filesystem = get_filesystem()
-        dirs = Dir.objects.all()
-
-        return render(
-            request=request,
-            template_name='index.html',
-            context={
-                'filesystem': filesystem,
-                'dirs': dirs,
-            },
-        )
-
-
-def delete_dir(request: HttpRequest, dir_id: int) -> HttpResponse:
-    """Delete a directory."""
-    if request.method == 'POST':
+    def delete_dir(self, request: HttpRequest) -> HttpResponse:
+        """Deletes a directory from the filesystem."""
+        dir_id = request.POST.get('dir_id')
         _dir = get_object_or_404(Dir, id=dir_id)
         _dir.delete()
+        return self.render_filesystem(request)
 
-        # Get the updated filesystem
-        filesystem = get_filesystem()
-        dirs = Dir.objects.all()
-
-        return render(
-            request=request,
-            template_name='index.html',
-            context={
-                'filesystem': filesystem,
-                'dirs': dirs,
-            },
-        )
-
-
-def rename_dir(request: HttpRequest, dir_id: int) -> HttpResponse:
-    """Rename a directory."""
-    if request.method == 'POST':
+    def rename_dir(self, request: HttpRequest) -> HttpResponse:
+        """Renames a directory in the filesystem."""
+        dir_id = request.POST.get('dir_id')
         new_dir_name = request.POST.get('new_dir_name')
         _dir = get_object_or_404(Dir, id=dir_id)
         _dir.display = new_dir_name
         _dir.save()
+        return self.render_filesystem(request)
 
-        # Get the updated filesystem
-        filesystem = get_filesystem()
-        dirs = Dir.objects.all()
-
-        return render(
-            request=request,
-            template_name='index.html',
-            context={
-                'filesystem': filesystem,
-                'dirs': dirs,
-            },
-        )
-
-
-def copy_dir(request: HttpRequest, dir_id: int) -> HttpResponse:
-    """Copy a directory and its contents."""
-    if request.method == 'POST':
+    def copy_dir(self, request: HttpRequest) -> HttpResponse:
+        """Copies a directory in the filesystem."""
+        dir_id = request.POST.get('dir_id')
         original_dir = get_object_or_404(Dir, id=dir_id)
         parent_dir = original_dir.dir
 
-        def copy_directory(original: Dir, parent: Dir = None) -> Dir:
+        def _copy_dir(original: Dir, parent: Dir = None) -> Dir:
             new_dir = Dir.objects.create(dir=parent, display=original.display)
-
-            # Copy Prompts
             for prompt in original.prompts.all():
                 new_prompt = Prompt.objects.create(
                     display=prompt.display, text=prompt.text, dir=new_dir
@@ -163,147 +186,151 @@ def copy_dir(request: HttpRequest, dir_id: int) -> HttpResponse:
                 new_prompt.aimodels.set(prompt.aimodels.all())
                 new_prompt.fields.set(prompt.fields.all())
                 new_prompt.save()
-
-            # Copy AIModels
             for aimodel in original.aimodels.all():
                 AIModel.objects.create(display=aimodel.display, dir=new_dir)
-
-            # Recursively copy child directories
             for child in original.children.all():
-                copy_directory(child, new_dir)
-
+                _copy_dir(child, new_dir)
             return new_dir
 
-        copy_directory(original_dir, parent_dir)
+        _copy_dir(original_dir, parent_dir)
+        return self.render_filesystem(request)
 
-        # Get the updated filesystem
-        filesystem = get_filesystem()
-        dirs = Dir.objects.all()
-
-        return render(
-            request=request,
-            template_name='index.html',
-            context={
-                'filesystem': filesystem,
-                'dirs': dirs,
-            },
-        )
-
-
-def move_dir(request: HttpRequest, dir_id: int) -> HttpResponse:
-    """Move a directory to a new parent directory."""
-    if request.method == 'POST':
+    def move_dir(self, request: HttpRequest) -> HttpResponse:
+        """Moves a directory in the filesystem."""
+        dir_id = request.POST.get('dir_id')
         new_parent_id = request.POST.get('new_parent_dir_id')
         new_parent_dir = (
             None
             if new_parent_id == 'None'
             else get_object_or_404(Dir, id=new_parent_id)
         )
-
         _dir = get_object_or_404(Dir, id=dir_id)
         _dir.dir = new_parent_dir
         _dir.save()
+        return self.render_filesystem(request)
 
-        # Get the updated filesystem
+    def render_filesystem(self, request: HttpRequest) -> HttpResponse:
+        """Renders the filesystem view."""
         filesystem = get_filesystem()
         dirs = Dir.objects.all()
-
-        return render(
-            request=request,
-            template_name='index.html',
-            context={
+        html = render_to_string(
+            'filesystem.html',
+            {
                 'filesystem': filesystem,
                 'dirs': dirs,
+                'level': 0,
             },
+            request=request,
         )
+        return HttpResponse(html)
 
 
-def add_prompt(request: HttpRequest) -> HttpResponse:
-    """Add a prompt to a directory."""
-    if request.method == 'POST':
+class PromptView(View):
+    def get(self, request: HttpRequest) -> HttpResponse:
+        action = request.GET.get('action')
+        if action == 'add':
+            return self.add_prompt_form(request)
+        elif action == 'delete':
+            return self.delete_prompt_form(request)
+        elif action == 'copy':
+            return self.copy_prompt_form(request)
+        elif action == 'move':
+            return self.move_prompt_form(request)
+        else:
+            return HttpResponse('Invalid action', status=400)
+
+    def post(self, request: HttpRequest) -> HttpResponse:
+        action = request.POST.get('action')
+        if action == 'add':
+            return self.add_prompt(request)
+        elif action == 'delete':
+            return self.delete_prompt(request)
+        elif action == 'copy':
+            return self.copy_prompt(request)
+        elif action == 'move':
+            return self.move_prompt(request)
+        else:
+            return HttpResponse('Invalid action', status=400)
+
+    def add_prompt_form(self, request: HttpRequest) -> HttpResponse:
+        """Renders the form to add a new prompt."""
+        dir_id = request.GET.get('dir_id')
+        html = render_to_string(
+            'modals/add_prompt.html', {'dir_id': dir_id}, request=request
+        )
+        return HttpResponse(html)
+
+    def delete_prompt_form(self, request: HttpRequest) -> HttpResponse:
+        """Renders the form to delete a prompt."""
+        prompt_id = request.GET.get('prompt_id')
+        html = render_to_string(
+            'modals/delete_prompt.html', {'prompt_id': prompt_id}, request=request
+        )
+        return HttpResponse(html)
+
+    def copy_prompt_form(self, request: HttpRequest) -> HttpResponse:
+        """Renders the form to copy a prompt."""
+        prompt_id = request.GET.get('prompt_id')
+        html = render_to_string(
+            'modals/copy_prompt.html', {'prompt_id': prompt_id}, request=request
+        )
+        return HttpResponse(html)
+
+    def move_prompt_form(self, request: HttpRequest) -> HttpResponse:
+        """Renders the form to move a prompt."""
+        prompt_id = request.GET.get('prompt_id')
+        dirs = Dir.objects.all()
+        html = render_to_string(
+            'modals/move_prompt.html',
+            {'prompt_id': prompt_id, 'dirs': dirs},
+            request=request,
+        )
+        return HttpResponse(html)
+
+    def add_prompt(self, request: HttpRequest) -> HttpResponse:
+        """Adds a new prompt to the filesystem."""
         display_name = request.POST.get('prompt_display')
         dir_id = request.POST.get('dir_id')
         _dir = get_object_or_404(Dir, id=dir_id)
-        _ = Prompt.objects.create(display=display_name, dir=_dir)
+        Prompt.objects.create(display=display_name, dir=_dir)
+        return self.render_filesystem(request)
 
-        # Get the updated filesystem
-        filesystem = get_filesystem()
-        dirs = Dir.objects.all()
-
-        return render(
-            request=request,
-            template_name='index.html',
-            context={
-                'filesystem': filesystem,
-                'dirs': dirs,
-            },
-        )
-
-    return HttpResponse(status=405)
-
-
-def copy_prompt(request: HttpRequest, prompt_id: int) -> HttpResponse:
-    """Copy a prompt to a new directory."""
-    if request.method == 'POST':
+    def delete_prompt(self, request: HttpRequest) -> HttpResponse:
+        """Deletes a prompt from the filesystem."""
+        prompt_id = request.POST.get('prompt_id')
         prompt = get_object_or_404(Prompt, id=prompt_id)
+        prompt.delete()
+        return self.render_filesystem(request)
 
-        # Create a copy of the prompt
+    def copy_prompt(self, request: HttpRequest) -> HttpResponse:
+        """Copies a prompt in the filesystem."""
+        prompt_id = request.POST.get('prompt_id')
+        prompt = get_object_or_404(Prompt, id=prompt_id)
         prompt.pk = None
         prompt.save()
+        return self.render_filesystem(request)
 
-        # Get the updated filesystem
-        filesystem = get_filesystem()
-        dirs = Dir.objects.all()
-
-        return render(
-            request=request,
-            template_name='index.html',
-            context={
-                'filesystem': filesystem,
-                'dirs': dirs,
-            },
-        )
-
-
-def move_prompt(request: HttpRequest, prompt_id: int) -> HttpResponse:
-    """Move a prompt to a new directory."""
-    if request.method == 'POST':
+    def move_prompt(self, request: HttpRequest) -> HttpResponse:
+        """Moves a prompt in the filesystem."""
+        prompt_id = request.POST.get('prompt_id')
         new_dir_id = request.POST.get('new_dir_id')
         new_dir = get_object_or_404(Dir, id=new_dir_id)
-
         prompt = get_object_or_404(Prompt, id=prompt_id)
         prompt.dir = new_dir
         prompt.save()
+        return self.render_filesystem(request)
 
-        # Get the updated filesystem
+    def render_filesystem(self, request: HttpRequest) -> HttpResponse:
+        """Renders the filesystem view."""
         filesystem = get_filesystem()
         dirs = Dir.objects.all()
-
-        return render(
-            request=request,
-            template_name='index.html',
-            context={
+        html = render_to_string(
+            'filesystem.html',
+            {
                 'filesystem': filesystem,
                 'dirs': dirs,
+                'level': 0,
             },
-        )
-
-
-def delete_prompt(request: HttpRequest, prompt_id: int) -> HttpResponse:
-    """Delete a prompt."""
-    if request.method == 'POST':
-        prompt = get_object_or_404(Prompt, id=prompt_id)
-        prompt.delete()
-
-        # Get the updated filesystem
-        filesystem = get_filesystem()
-        dirs = Dir.objects.all()
-
-        return render(
             request=request,
-            template_name='index.html',
-            context={
-                'filesystem': filesystem,
-                'dirs': dirs,
-            },
         )
+        return HttpResponse(html)

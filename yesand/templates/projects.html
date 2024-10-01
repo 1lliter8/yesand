@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+{% block bootstrap5_content %}
+    <div class="container-fluid">
+        <div class="row mt-3">
+            <nav id="sidebar"
+                 class="col-md-3 col-lg-2 d-md-block sidebar vh-100 overflow-auto">
+                <div class="position-sticky">{% include "filesystem.html" with filesystem=filesystem level=0 %}</div>
+            </nav>
+            <main id="main-project-content"
+                  class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                {% if prompts %}
+                    {% include "prompt.html" %}
+                {% else %}
+                    <div>
+                        <h1>Welcome</h1>
+                        <p>Select a directory or file to view its prompts.</p>
+                    </div>
+                {% endif %}
+            </main>
+        </div>
+    </div>
+    <!-- Modal container -->
+    <div class="modal fade"
+         id="actionModal"
+         tabindex="-1"
+         aria-labelledby="actionModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div id="modal-content">
+                    <!-- Modal content will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block extra_js %}
+    <!-- Modal javascript -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var actionModal = document.getElementById('actionModal');
+        var bsModal = new bootstrap.Modal(actionModal);
+
+        htmx.on('htmx:afterSwap', function(event) {
+            if (event.detail.target.id === 'modal-content') {
+                bsModal.show();
+            }
+        });
+
+        htmx.on('htmx:beforeSwap', function(event) {
+            if (event.detail.target.id === 'filesystem') {
+                bsModal.hide();
+            }
+        });
+
+        actionModal.addEventListener('hidden.bs.modal', function () {
+            document.getElementById('modal-content').innerHTML = '';
+        });
+    });
+    </script>
+{% endblock %}
