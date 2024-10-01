@@ -34,6 +34,10 @@
                         </a>
                     </li>
                 </ul>
+                <div class="form-check form-switch d-flex align-items-center justify-content-between">
+                    <label class="form-check-label" for="themeSwitch">{% bs_icon 'circle-half' size='1.5em' %}</label>
+                    <input class="form-check-input ms-2" type="checkbox" id="themeSwitch">
+                </div>
             </div>
         </div>
     </nav>
@@ -56,5 +60,24 @@
             });
         })
     });
+    </script>
+    <script>
+        // Theme toggle functionality
+        const themeSwitch = document.getElementById('themeSwitch');
+
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-bs-theme', theme);
+            localStorage.setItem('theme', theme);
+            themeSwitch.checked = (theme === 'dark');
+        }
+
+        // Check for saved theme preference or default to 'light'
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        setTheme(savedTheme);
+
+        themeSwitch.addEventListener('change', () => {
+            const newTheme = themeSwitch.checked ? 'dark' : 'light';
+            setTheme(newTheme);
+        });
     </script>
 {% endblock %}
