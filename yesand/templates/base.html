@@ -9,7 +9,7 @@
     <link rel="icon" href="{% static 'images/logo.svg' %}" type="image/svg+xml">
 {% endblock %}
 {% block bootstrap5_before_content %}
-    <nav class="navbar navbar-expand-lg bg-primary">
+    <nav class="navbar navbar-expand-lg bg-primary navbar-dark">
         <div class="container-fluid">
             <a class="navbar-brand" href="/">
                 <img src="{% static 'images/logo.svg' %}"
@@ -27,17 +27,32 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarColor01">
-                <ul class="navbar-nav me-auto">
+                <ul class="navbar-nav me-auto navbar-text">
                     <li class="nav-item">
-                        <a class="nav-link active" href="/">Projects
+                        <a class="nav-link" href="/">Projects
                             <span class="visually-hidden">(current)</span>
                         </a>
                     </li>
                 </ul>
-                <div class="form-check form-switch d-flex align-items-center justify-content-between">
-                    <label class="form-check-label" for="themeSwitch">{% bs_icon 'circle-half' size='1.5em' %}</label>
-                    <input class="form-check-input ms-2" type="checkbox" id="themeSwitch">
-                </div>
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center"
+                           href="#"
+                           id="themeDropdown"
+                           role="button"
+                           data-bs-toggle="dropdown"
+                           aria-expanded="false">{% bs_icon 'circle-half' size='1.5em' %}</a>
+                        <ul class="dropdown-menu dropdown-menu-end"
+                            aria-labelledby="themeDropdown">
+                            <li>
+                                <a class="dropdown-item" href="#" data-theme="light">{% bs_icon 'sun' %} Light</a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#" data-theme="dark">{% bs_icon 'moon' %} Dark</a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
             </div>
         </div>
     </nav>
@@ -63,21 +78,31 @@
     </script>
     <script>
         // Theme toggle functionality
-        const themeSwitch = document.getElementById('themeSwitch');
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeDropdown = document.getElementById('themeDropdown');
+            const dropdownMenu = themeDropdown.nextElementSibling;
 
-        function setTheme(theme) {
-            document.documentElement.setAttribute('data-bs-theme', theme);
-            localStorage.setItem('theme', theme);
-            themeSwitch.checked = (theme === 'dark');
-        }
+            function setTheme(theme) {
+                document.documentElement.setAttribute('data-bs-theme', theme);
+                localStorage.setItem('theme', theme);
+            }
 
-        // Check for saved theme preference or default to 'light'
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        setTheme(savedTheme);
+            // Check for saved theme preference or default to 'light'
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            setTheme(savedTheme);
 
-        themeSwitch.addEventListener('change', () => {
-            const newTheme = themeSwitch.checked ? 'dark' : 'light';
-            setTheme(newTheme);
+            // Use event delegation for dropdown items
+            dropdownMenu.addEventListener('click', (e) => {
+                const item = e.target.closest('[data-theme]');
+                if (item) {
+                    e.preventDefault();
+                    const newTheme = item.getAttribute('data-theme');
+                    setTheme(newTheme);
+                }
+            });
+
+            // Initialize Bootstrap dropdown
+            new bootstrap.Dropdown(themeDropdown);
         });
     </script>
 {% endblock %}
