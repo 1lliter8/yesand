@@ -1,0 +1,65 @@
+{% load bootstrap_icons %}
+<div class="card mb-3" id="prompt-card-{{ prompt.id }}">
+    <div class="card-body">
+        <!-- Breadcrumb trail -->
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb d-flex align-items-center">
+                {% with dirs=prompt.dir.get_ancestors|default_if_none:"" %}
+                    <li class="breadcrumb-item d-flex align-items-center">{% bs_icon 'folder' %}</li>
+                    {% for dir in dirs %}
+                        <li class="breadcrumb-item d-flex align-items-center">
+                            <a href="{% url 'load_prompts' dir.id %}"
+                               hx-get="{% url 'load_prompts' dir.id %}"
+                               hx-target="#main-project-content"
+                               hx-push-url="true">{{ dir.display }}</a>
+                        </li>
+                    {% endfor %}
+                    <li class="breadcrumb-item d-flex align-items-center">
+                        <a href="{% url 'load_prompts' prompt.dir.id %}"
+                           hx-get="{% url 'load_prompts' prompt.dir.id %}"
+                           hx-target="#main-project-content"
+                           hx-push-url="true"
+                           aria-current="page">{{ prompt.dir.display }}</a>
+                    </li>
+                {% endwith %}
+            </ol>
+        </nav>
+        <!-- Prompt name -->
+        <div class="row mb-3 align-items-center">
+            <div class="col-auto pe-2 d-flex align-items-center">{% bs_icon 'chat' %}</div>
+            <div class="col ps-0">
+                <h5 class="card-title mb-0" id="prompt-title-{{ prompt.id }}">{{ prompt.display }}</h5>
+            </div>
+        </div>
+        <!-- Prompt text -->
+        <div class="row mb-3">
+            <div class="col-auto pe-2 d-flex align-items-top mt-1">{% bs_icon 'chat-quote' %}</div>
+            <div class="col ps-0">
+                <p class="card-text mb-0" id="prompt-text-{{ prompt.id }}">{{ prompt.text }}</p>
+            </div>
+        </div>
+        <!-- AIModels as badges -->
+        <div class="row mb-3 align-items-center">
+            <div class="col-auto pe-2 d-flex align-items-center">{% bs_icon 'robot' %}</div>
+            <div class="col ps-0">
+                <div id="prompt-aimodels-{{ prompt.id }}">
+                    {% for aimodel in prompt.aimodels.all %}
+                        <span class="badge rounded-pill bg-secondary">{{ aimodel.display }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <!-- Edit button -->
+        <div class="row mt-3">
+            <div class="col">
+                <button class="btn btn-primary d-flex align-items-center"
+                        hx-get="{% url 'prompt' %}?action=edit&prompt_id={{ prompt.id }}"
+                        hx-target="#prompt-card-{{ prompt.id }}"
+                        hx-swap="outerHTML">
+                    {% bs_icon 'pencil' extra_classes="me-2" %}
+                    Edit
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

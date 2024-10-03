@@ -16,10 +16,14 @@
                                 <span class="text-truncate">{{ item.display }}</span>
                             </a>
                         {% else %}
-                            <span class="text-secondary d-flex align-items-center text-truncate">
+                            <a href="#"
+                               class="text-decoration-none d-flex align-items-center text-truncate"
+                               hx-get="{% url 'load_prompts_single' item.dir item.id %}"
+                               hx-target="#main-project-content"
+                               hx-push-url="true">
                                 {% bs_icon 'chat' extra_classes='me-2 flex-shrink-0' %}
                                 <span class="text-truncate">{{ item.display }}</span>
-                            </span>
+                            </a>
                         {% endif %}
                     </div>
                     <div class="position-absolute end-0 me-2">

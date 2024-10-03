@@ -10,11 +10,11 @@
             <main id="main-project-content"
                   class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
                 {% if prompts %}
-                    {% include "prompt.html" %}
+                    {% include "prompt/prompt.html" %}
                 {% else %}
                     <div>
                         <h1>Welcome</h1>
-                        <p>Select a directory or file to view its prompts.</p>
+                        <p>Select or create a directory to get started.</p>
                     </div>
                 {% endif %}
             </main>
@@ -58,5 +58,46 @@
             document.getElementById('modal-content').innerHTML = '';
         });
     });
+    </script>
+    <!-- Text field autoresize javascript -->
+    <script>
+    function autoResize(textarea) {
+         textarea.style.height = 'auto';
+         const lineHeight = parseFloat(getComputedStyle(textarea).lineHeight);
+         const minHeight = 3 * lineHeight;
+         const contentHeight = textarea.scrollHeight;
+         const extraRowHeight = lineHeight;
+         
+         textarea.style.height = Math.max(contentHeight + extraRowHeight, minHeight) + 'px';
+     }
+ 
+     function initAutoResize(textarea) {
+         autoResize(textarea); // Initial resize
+         textarea.addEventListener('input', function() {
+             autoResize(this);
+         });
+     }
+ 
+     // Initialize for existing textareas
+     document.querySelectorAll('.auto-resize').forEach(initAutoResize);
+ 
+     // Set up a MutationObserver to watch for new textareas
+     const observer = new MutationObserver(function(mutations) {
+         mutations.forEach(function(mutation) {
+             mutation.addedNodes.forEach(function(node) {
+                 if (node.nodeType === Node.ELEMENT_NODE) {
+                     node.querySelectorAll('.auto-resize').forEach(initAutoResize);
+                 }
+             });
+         });
+     });
+ 
+     // Start observing the document body for changes
+     observer.observe(document.body, { childList: true, subtree: true });
+ 
+     // Handle HTMX after-swap event
+     document.body.addEventListener('htmx:afterSwap', function(event) {
+         event.detail.elt.querySelectorAll('.auto-resize').forEach(initAutoResize);
+     });
     </script>
 {% endblock %}

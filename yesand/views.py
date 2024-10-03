@@ -50,15 +50,22 @@ class ProjectView(View):
 
 
 class LoadPromptsView(View):
-    def get(self, request: HttpRequest, dir_id: int) -> HttpResponse:
+    def get(
+        self, request: HttpRequest, dir_id: int, prompt_id: int | None = None
+    ) -> HttpResponse:
         _dir = get_object_or_404(Dir, id=dir_id)
         all_prompts = self.get_all_prompts(_dir)
 
+        if prompt_id:
+            selected_prompts = all_prompts.filter(id=prompt_id)
+        else:
+            selected_prompts = all_prompts
+
         return render(
             request,
-            'prompt.html',
+            'prompt/prompt.html',
             {
-                'prompts': all_prompts,
+                'prompts': selected_prompts,
                 'dir_name': _dir.display,
             },
         )
@@ -236,6 +243,10 @@ class PromptView(View):
             return self.copy_prompt_form(request)
         elif action == 'move':
             return self.move_prompt_form(request)
+        elif action == 'edit':
+            return self.edit_prompt(request)
+        elif action == 'view':
+            return self.view_prompt(request)
         else:
             return HttpResponse('Invalid action', status=400)
 
@@ -249,6 +260,8 @@ class PromptView(View):
             return self.copy_prompt(request)
         elif action == 'move':
             return self.move_prompt(request)
+        elif action == 'save':
+            return self.save_prompt(request)
         else:
             return HttpResponse('Invalid action', status=400)
 
@@ -333,4 +346,39 @@ class PromptView(View):
             },
             request=request,
         )
+        return HttpResponse(html)
+
+    def edit_prompt(self, request: HttpRequest) -> HttpResponse:
+        """Renders the form to edit a prompt."""
+        prompt_id = request.GET.get('prompt_id')
+        prompt = get_object_or_404(Prompt, id=prompt_id)
+        all_aimodels = AIModel.objects.all()
+        html = render_to_string(
+            'prompt/edit.html',
+            {'prompt': prompt, 'all_aimodels': all_aimodels},
+            request=request,
+        )
+        return HttpResponse(html)
+
+    def view_prompt(self, request: HttpRequest) -> HttpResponse:
+        """Renders the prompt card view."""
+        prompt_id = request.GET.get('prompt_id')
+        prompt = get_object_or_404(Prompt, id=prompt_id)
+        html = render_to_string('prompt/card.html', {'prompt': prompt}, request=request)
+        return HttpResponse(html)
+
+    def save_prompt(self, request: HttpRequest) -> HttpResponse:
+        """Saves changes to an existing prompt."""
+        prompt_id = request.POST.get('prompt_id')
+        prompt = get_object_or_404(Prompt, id=prompt_id)
+        prompt.display = request.POST.get('display')
+        prompt.text = request.POST.get('text')
+        prompt.save()
+
+        # Update AIModels
+        selected_aimodels = request.POST.getlist('aimodels')
+        prompt.aimodels.set(selected_aimodels)
+
+        # Render the updated prompt card
+        html = render_to_string('prompt/card.html', {'prompt': prompt}, request=request)
         return HttpResponse(html)
