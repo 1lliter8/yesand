@@ -1,0 +1,67 @@
+{% load bootstrap_icons %}
+<div class="card mb-3" id="aimodel-card-{{ aimodel.id }}">
+    <div class="card-body">
+        <form hx-post="{% url 'aimodel' %}"
+              hx-target="#aimodel-card-{{ aimodel.id }}"
+              hx-swap="outerHTML">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="save">
+            <input type="hidden" name="aimodel_id" value="{{ aimodel.id }}">
+            <!-- Breadcrumb trail -->
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb d-flex align-items-center">
+                    {% with dirs=aimodel.dir.get_ancestors|default_if_none:"" %}
+                        <li class="breadcrumb-item d-flex align-items-center">{% bs_icon 'folder' %}</li>
+                        {% for dir in dirs %}
+                            <li class="breadcrumb-item d-flex align-items-center">
+                                <a href="{% url 'dir' %}?action=view&dir_id={{ dir.id }}"
+                                   hx-get="{% url 'aimodel' %}?action=view&aimodel_id={{ aimodel.id }}"
+                                   hx-target="#aimodel-card-{{ aimodel.id }}"
+                                   hx-swap="outerHTML"
+                                   hx-confirm="Are you sure you want to cancel editing?">{{ dir.display }}</a>
+                            </li>
+                        {% endfor %}
+                        <li class="breadcrumb-item d-flex align-items-center">
+                            <a href="{% url 'dir' %}?action=view&dir_id={{ aimodel.dir.id }}"
+                               hx-get="{% url 'aimodel' %}?action=view&aimodel_id={{ aimodel.id }}"
+                               hx-target="#aimodel-card-{{ aimodel.id }}"
+                               hx-swap="outerHTML"
+                               hx-confirm="Are you sure you want to cancel editing?"
+                               aria-current="page">{{ aimodel.dir.display }}</a>
+                        </li>
+                    {% endwith %}
+                </ol>
+            </nav>
+            <!-- Editable AI name -->
+            <div class="row mb-3 align-items-center">
+                <div class="col-auto pe-2 d-flex align-items-center">{% bs_icon 'robot' %}</div>
+                <div class="col ps-0">
+                    <input type="text"
+                           class="form-control"
+                           name="display"
+                           value="{{ aimodel.display }}"
+                           required>
+                </div>
+            </div>
+            <!-- Save and Cancel buttons -->
+            <div class="row mt-3">
+                <div class="col">
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success d-flex align-items-center">
+                            {% bs_icon 'check' extra_classes="me-2" %}
+                            Save
+                        </button>
+                        <button type="button"
+                                class="btn btn-secondary d-flex align-items-center"
+                                hx-get="{% url 'aimodel' %}?action=view&aimodel_id={{ aimodel.id }}"
+                                hx-target="#aimodel-card-{{ aimodel.id }}"
+                                hx-swap="outerHTML">
+                            {% bs_icon 'x' extra_classes="me-2" %}
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

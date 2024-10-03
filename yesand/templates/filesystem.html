@@ -9,19 +9,28 @@
                         {% if item.type == 'dir' %}
                             <a href="#"
                                class="text-decoration-none d-flex align-items-center text-truncate"
-                               hx-get="{% url 'load_prompts' item.id %}"
+                               hx-get="{% url 'dir' %}?action=view&dir_id={{ item.id }}"
                                hx-target="#main-project-content"
                                hx-push-url="true">
                                 {% bs_icon 'folder' extra_classes='me-2 flex-shrink-0' %}
                                 <span class="text-truncate">{{ item.display }}</span>
                             </a>
-                        {% else %}
+                        {% elif item.type == 'prompt' %}
                             <a href="#"
                                class="text-decoration-none d-flex align-items-center text-truncate"
-                               hx-get="{% url 'load_prompts_single' item.dir item.id %}"
+                               hx-get="{% url 'prompt' %}?action=view&prompt_id={{ item.id }}"
                                hx-target="#main-project-content"
                                hx-push-url="true">
                                 {% bs_icon 'chat' extra_classes='me-2 flex-shrink-0' %}
+                                <span class="text-truncate">{{ item.display }}</span>
+                            </a>
+                        {% elif item.type == 'aimodel' %}
+                            <a href="#"
+                               class="text-decoration-none d-flex align-items-center text-truncate"
+                               hx-get="{% url 'aimodel' %}?action=view&aimodel_id={{ item.id }}"
+                               hx-target="#main-project-content"
+                               hx-push-url="true">
+                                {% bs_icon 'robot' extra_classes='me-2 flex-shrink-0' %}
                                 <span class="text-truncate">{{ item.display }}</span>
                             </a>
                         {% endif %}
@@ -51,6 +60,12 @@
                                     <li>
                                         <a class="dropdown-item"
                                            href="#"
+                                           hx-get="{% url 'aimodel' %}?action=add&dir_id={{ item.id }}"
+                                           hx-target="#modal-content">{% bs_icon 'robot' extra_classes='me-2' %} Add new AI model</a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item"
+                                           href="#"
                                            hx-get="{% url 'dir' %}?action=rename&dir_id={{ item.id }}"
                                            hx-target="#modal-content">{% bs_icon 'pencil' extra_classes='me-2' %} Rename directory</a>
                                     </li>
@@ -75,7 +90,7 @@
                                            hx-get="{% url 'dir' %}?action=delete&dir_id={{ item.id }}"
                                            hx-target="#modal-content">{% bs_icon 'trash' extra_classes='me-2' %} Delete directory</a>
                                     </li>
-                                {% else %}
+                                {% elif item.type == 'prompt' %}
                                     <li>
                                         <a class="dropdown-item"
                                            href="#"
@@ -96,6 +111,28 @@
                                            href="#"
                                            hx-get="{% url 'prompt' %}?action=delete&prompt_id={{ item.id }}"
                                            hx-target="#modal-content">{% bs_icon 'trash' extra_classes='me-2' %} Delete prompt</a>
+                                    </li>
+                                {% elif item.type == 'aimodel' %}
+                                    <li>
+                                        <a class="dropdown-item"
+                                           href="#"
+                                           hx-get="{% url 'aimodel' %}?action=copy&aimodel_id={{ item.id }}"
+                                           hx-target="#modal-content">{% bs_icon 'layers' extra_classes='me-2' %} Copy AI model</a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item"
+                                           href="#"
+                                           hx-get="{% url 'aimodel' %}?action=move&aimodel_id={{ item.id }}"
+                                           hx-target="#modal-content">{% bs_icon 'arrow-return-right' extra_classes='me-2' %} Move AI model</a>
+                                    </li>
+                                    <li>
+                                        <hr class="dropdown-divider">
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item text-danger"
+                                           href="#"
+                                           hx-get="{% url 'aimodel' %}?action=delete&aimodel_id={{ item.id }}"
+                                           hx-target="#modal-content">{% bs_icon 'trash' extra_classes='me-2' %} Delete AI model</a>
                                     </li>
                                 {% endif %}
                             </ul>

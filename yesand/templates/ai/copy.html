@@ -1,0 +1,27 @@
+<!-- Copy AI Modal Content -->
+<div class="modal-header">
+    <h5 class="modal-title">Copy AI Model</h5>
+    <button type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="Close"></button>
+</div>
+<form hx-post="{% url 'aimodel' %}"
+      hx-target="#filesystem"
+      hx-swap="outerHTML"
+      hx-trigger="submit"
+      hx-indicator="#copy-aimodel-spinner">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="copy">
+    <input type="hidden" name="aimodel_id" value="{{ aimodel.id }}">
+    <div class="modal-body">
+        <p>Are you sure you want to copy this AI model?</p>
+    </div>
+    <div class="modal-footer">
+        <span id="copy-aimodel-spinner"
+              class="spinner-border spinner-border-sm htmx-indicator"
+              role="status"
+              aria-hidden="true"></span>
+        <button type="submit" class="btn btn-primary">Copy AI Model</button>
+    </div>
+</form>
