@@ -1,0 +1,23 @@
+{% extends "modal/base.html" %}
+{% block modal_title %}Copy {{ item_verbose_name }}{% endblock %}
+{% block form_url %}
+    {% url view_name %}
+{% endblock %}
+{% block action %}copy{% endblock %}
+{% block hidden_inputs %}<input type="hidden" name="{{ item_type }}_id" value="{{ item.id }}">{% endblock %}
+{% block modal_body %}
+    <div class="mb-3">
+        <label for="{{ form.new_dir.id_for_label }}" class="form-label">New directory</label>
+        <select name="{{ form.new_dir.name }}"
+                id="{{ form.new_dir.id_for_label }}"
+                class="form-select {% if form.new_dir.errors %}is-invalid{% endif %}">
+            {% for choice in form.new_dir.field.choices %}<option value="{{ choice.0 }}">{{ choice.1 }}</option>{% endfor %}
+        </select>
+        {% if form.new_dir.errors %}
+            <div class="invalid-feedback">
+                {% for error in form.new_dir.errors %}{{ error }}{% endfor %}
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}
+{% block submit_button_text %}Copy {{ item_verbose_name }}{% endblock %}

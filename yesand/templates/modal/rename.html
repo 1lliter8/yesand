@@ -1,0 +1,24 @@
+{% extends "modal/base.html" %}
+{% load bootstrap_icons %}
+{% block modal_title %}Rename {{ item_verbose_name }}{% endblock %}
+{% block form_url %}
+    {% url view_name %}
+{% endblock %}
+{% block action %}rename{% endblock %}
+{% block hidden_inputs %}<input type="hidden" name="{{ item_type }}_id" value="{{ item.id }}">{% endblock %}
+{% block modal_body %}
+    {% if error %}<div class="alert alert-danger" role="alert">{{ error }}</div>{% endif %}
+    <div class="mb-3">
+        <label for="name" class="form-label">New name</label>
+        <input type="text"
+               class="form-control"
+               id="name"
+               name="name"
+               value="{{ item.name }}"
+               required>
+    </div>
+{% endblock %}
+{% block footer_buttons %}
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+    <button type="submit" class="btn btn-primary">Rename {{ item_verbose_name }}</button>
+{% endblock %}

@@ -7,13 +7,13 @@
         {% for ancestor in dir.get_ancestors %}
             <li class="breadcrumb-item">
                 <a href="#"
-                   hx-get="{% url 'dir' %}?action=view&dir_id={{ ancestor.id }}"
+                   hx-get="{% url 'dir' %}?action=view&id={{ ancestor.id }}"
                    hx-target="#main-project-content">{{ ancestor.display }}</a>
             </li>
         {% endfor %}
         <li class="breadcrumb-item d-flex align-items-center">
-            <a href="{% url 'dir' %}?action=view&dir_id={{ dir.id }}"
-               hx-get="{% url 'dir' %}?action=view&dir_id={{ dir.id }}"
+            <a href="{% url 'dir' %}?action=view&id={{ dir.id }}"
+               hx-get="{% url 'dir' %}?action=view&id={{ dir.id }}"
                hx-target="#main-project-content"
                hx-push-url="true"
                aria-current="page">{{ dir.display }}</a>

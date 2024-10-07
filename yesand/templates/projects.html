@@ -28,9 +28,9 @@
     </div>
     <!-- Modal container -->
     <div class="modal fade"
-         id="actionModal"
+         id="itemModal"
          tabindex="-1"
-         aria-labelledby="actionModalLabel"
+         aria-labelledby="itemModalLabel"
          aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -45,8 +45,8 @@
     <!-- Modal javascript -->
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        var actionModal = document.getElementById('actionModal');
-        var bsModal = new bootstrap.Modal(actionModal);
+        var itemModal = document.getElementById('itemModal');
+        var bsModal = new bootstrap.Modal(itemModal);
 
         htmx.on('htmx:afterSwap', function(event) {
             if (event.detail.target.id === 'modal-content') {
@@ -60,7 +60,7 @@
             }
         });
 
-        actionModal.addEventListener('hidden.bs.modal', function () {
+        itemModal.addEventListener('hidden.bs.modal', function () {
             document.getElementById('modal-content').innerHTML = '';
         });
     });

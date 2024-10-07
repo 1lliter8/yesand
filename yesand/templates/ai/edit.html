@@ -14,16 +14,16 @@
                         <li class="breadcrumb-item d-flex align-items-center">{% bs_icon 'folder' %}</li>
                         {% for dir in dirs %}
                             <li class="breadcrumb-item d-flex align-items-center">
-                                <a href="{% url 'dir' %}?action=view&dir_id={{ dir.id }}"
-                                   hx-get="{% url 'aimodel' %}?action=view&aimodel_id={{ aimodel.id }}"
+                                <a href="{% url 'dir' %}?action=view&id={{ dir.id }}"
+                                   hx-get="{% url 'aimodel' %}?action=view&id={{ aimodel.id }}"
                                    hx-target="#aimodel-card-{{ aimodel.id }}"
                                    hx-swap="outerHTML"
                                    hx-confirm="Are you sure you want to cancel editing?">{{ dir.display }}</a>
                             </li>
                         {% endfor %}
                         <li class="breadcrumb-item d-flex align-items-center">
-                            <a href="{% url 'dir' %}?action=view&dir_id={{ aimodel.dir.id }}"
-                               hx-get="{% url 'aimodel' %}?action=view&aimodel_id={{ aimodel.id }}"
+                            <a href="{% url 'dir' %}?action=view&id={{ aimodel.dir.id }}"
+                               hx-get="{% url 'aimodel' %}?action=view&id={{ aimodel.id }}"
                                hx-target="#aimodel-card-{{ aimodel.id }}"
                                hx-swap="outerHTML"
                                hx-confirm="Are you sure you want to cancel editing?"
@@ -53,7 +53,7 @@
                         </button>
                         <button type="button"
                                 class="btn btn-secondary d-flex align-items-center"
-                                hx-get="{% url 'aimodel' %}?action=view&aimodel_id={{ aimodel.id }}"
+                                hx-get="{% url 'aimodel' %}?action=view&id={{ aimodel.id }}"
                                 hx-target="#aimodel-card-{{ aimodel.id }}"
                                 hx-swap="outerHTML">
                             {% bs_icon 'x' extra_classes="me-2" %}

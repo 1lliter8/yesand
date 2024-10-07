@@ -1,0 +1,33 @@
+{% load bootstrap_icons %}
+<div class="modal-header">
+    <h5 class="modal-title">
+        {% block modal_title %}{% endblock %}
+    </h5>
+    <button type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="Close"></button>
+</div>
+<form hx-post="{% block form_url %}{% endblock %}"
+      hx-target="#filesystem"
+      hx-swap="outerHTML"
+      hx-trigger="submit"
+      hx-indicator="#modal-spinner">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="{% block action %}{% endblock %}">
+    {% block hidden_inputs %}{% endblock %}
+    <div class="modal-body">
+        {% block modal_body %}{% endblock %}
+    </div>
+    <div class="modal-footer">
+        <span id="modal-spinner"
+              class="spinner-border spinner-border-sm htmx-indicator"
+              role="status"
+              aria-hidden="true"></span>
+        {% block footer_buttons %}
+            <button type="submit" class="btn btn-primary">
+                {% block submit_button_text %}Submit{% endblock %}
+            </button>
+        {% endblock %}
+    </div>
+</form>

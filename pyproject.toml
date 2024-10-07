@@ -97,3 +97,7 @@ sequence = [
   "createsuperuser"
 ]
 help = "Reset the database, migrate, reskin admin, add a default project, make a new superuser."
+
+[tool.poe.tasks.tree]
+cmd = "tree -I '__*'"
+help = "Show the project directory structure. Useful for using LLMs to debug."

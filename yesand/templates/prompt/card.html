@@ -9,14 +9,14 @@
                     {% for dir in dirs %}
                         <li class="breadcrumb-item d-flex align-items-center">
                             <a href="#"
-                               hx-get="{% url 'dir' %}?action=view&dir_id={{ dir.id }}"
+                               hx-get="{% url 'dir' %}?action=view&id={{ dir.id }}"
                                hx-target="#main-project-content"
                                hx-push-url="true">{{ dir.display }}</a>
                         </li>
                     {% endfor %}
                     <li class="breadcrumb-item d-flex align-items-center">
                         <a href="#"
-                           hx-get="{% url 'dir' %}?action=view&dir_id={{ prompt.dir.id }}"
+                           hx-get="{% url 'dir' %}?action=view&id={{ prompt.dir.id }}"
                            hx-target="#main-project-content"
                            hx-push-url="true"
                            aria-current="page">{{ prompt.dir.display }}</a>

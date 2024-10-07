@@ -1,0 +1,18 @@
+{% extends "modal/base.html" %}
+{% block modal_title %}Move {{ item_verbose_name }}{% endblock %}
+{% block form_url %}
+    {% url view_name %}
+{% endblock %}
+{% block action %}move{% endblock %}
+{% block hidden_inputs %}<input type="hidden" name="{{ item_type }}_id" value="{{ item.id }}">{% endblock %}
+{% block modal_body %}
+    <div class="mb-3">
+        <label for="new_dir" class="form-label">New directory</label>
+        <select name="new_dir" id="new_dir" class="form-select" required>
+            <option value="">Select a directory</option>
+            <option value="None">Move to root</option>
+            {% for dir in dirs %}<option value="{{ dir.id }}">{{ dir.display }}</option>{% endfor %}
+        </select>
+    </div>
+{% endblock %}
+{% block submit_button_text %}Move {{ item_verbose_name }}{% endblock %}

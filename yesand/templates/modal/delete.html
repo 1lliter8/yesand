@@ -1,0 +1,12 @@
+{% extends "modal/base.html" %}
+{% block modal_title %}Delete {{ item_verbose_name }}{% endblock %}
+{% block form_url %}
+    {% url view_name %}
+{% endblock %}
+{% block action %}delete{% endblock %}
+{% block hidden_inputs %}<input type="hidden" name="{{ item_type }}_id" value="{{ item.id }}">{% endblock %}
+{% block modal_body %}<p>Are you sure you want to delete this {{ item_verbose_name }}?</p>{% endblock %}
+{% block footer_buttons %}
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+    <button type="submit" class="btn btn-danger">Yes</button>
+{% endblock %}

@@ -3,13 +3,29 @@ from typing import Union
 from django.db import models
 
 
-class Dir(models.Model):
+class ItemMixin(models.Model):
+    """A mixin for items that can be used with ItemView."""
+
+    display = models.CharField(max_length=255)
+    dir = models.ForeignKey('Dir', on_delete=models.CASCADE, related_name='%(class)ss')
+
+    class Meta:
+        abstract = True
+
+    def __str__(self):
+        return self.display
+
+
+class Dir(ItemMixin):
     """A directory in the file tree structure."""
 
     dir = models.ForeignKey(
         'self', on_delete=models.CASCADE, null=True, blank=True, related_name='children'
     )
-    display = models.CharField(max_length=255)
+
+    class Meta:
+        verbose_name = 'directory'
+        verbose_name_plural = 'directories'
 
     def __str__(self):
         return self.display
@@ -45,14 +61,12 @@ class Dir(models.Model):
         return descendants
 
 
-class AIModel(models.Model):
+class AIModel(ItemMixin):
     """A model that can be used to generate text."""
 
-    display = models.CharField(max_length=255)
-    dir = models.ForeignKey(Dir, on_delete=models.CASCADE, related_name='aimodels')
-
-    def __str__(self):
-        return self.display
+    class Meta:
+        verbose_name = 'AI model'
+        verbose_name_plural = 'AI models'
 
 
 class Field(models.Model):
@@ -64,14 +78,16 @@ class Field(models.Model):
         return f'Field {self.template}'
 
 
-class Prompt(models.Model):
+class Prompt(ItemMixin):
     """A prompt for a text generation model."""
 
-    display = models.CharField(max_length=255)
-    text = models.TextField()
-    dir = models.ForeignKey(Dir, on_delete=models.CASCADE, related_name='prompts')
+    text = models.TextField(blank=True)
     aimodels = models.ManyToManyField(AIModel, blank=True, related_name='prompts')
     fields = models.ManyToManyField(Field, blank=True, related_name='prompts')
+
+    class Meta:
+        verbose_name = 'prompt'
+        verbose_name_plural = 'prompts'
 
     def __str__(self):
         return f'{self.display}: {self.text[:50]}...'

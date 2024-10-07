@@ -8,15 +8,15 @@
                     <li class="breadcrumb-item d-flex align-items-center">{% bs_icon 'folder' %}</li>
                     {% for dir in dirs %}
                         <li class="breadcrumb-item d-flex align-items-center">
-                            <a href="{% url 'dir' %}?action=view&dir_id={{ dir.id }}"
-                               hx-get="{% url 'dir' %}?action=view&dir_id={{ dir.id }}"
+                            <a href="{% url 'dir' %}?action=view&id={{ dir.id }}"
+                               hx-get="{% url 'dir' %}?action=view&id={{ dir.id }}"
                                hx-target="#main-project-content"
                                hx-push-url="true">{{ dir.display }}</a>
                         </li>
                     {% endfor %}
                     <li class="breadcrumb-item d-flex align-items-center">
-                        <a href="{% url 'dir' %}?action=view&dir_id={{ aimodel.dir.id }}"
-                           hx-get="{% url 'dir' %}?action=view&dir_id={{ aimodel.dir.id }}"
+                        <a href="{% url 'dir' %}?action=view&id={{ aimodel.dir.id }}"
+                           hx-get="{% url 'dir' %}?action=view&id={{ aimodel.dir.id }}"
                            hx-target="#main-project-content"
                            hx-push-url="true"
                            aria-current="page">{{ aimodel.dir.display }}</a>

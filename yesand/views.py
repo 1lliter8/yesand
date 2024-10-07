@@ -1,9 +1,12 @@
-from django.http import HttpRequest, HttpResponse
+from typing import Callable
+
+from django.forms import ModelForm
+from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, render
-from django.template.loader import render_to_string
 from django.views import View
 
-from .models import AIModel, Dir, Prompt
+from .forms import AddEditForm, CopyForm
+from .models import AIModel, Dir, ItemMixin, Prompt
 
 
 def get_filesystem(parent: Dir = None, level: int = 0) -> list[dict]:
@@ -14,6 +17,7 @@ def get_filesystem(parent: Dir = None, level: int = 0) -> list[dict]:
         # Create a dictionary for the current directory
         dir_data = {
             'type': 'dir',
+            'type_display': 'directory',
             'display': _dir.display,
             'level': level,
             'id': _dir.id,
@@ -27,6 +31,7 @@ def get_filesystem(parent: Dir = None, level: int = 0) -> list[dict]:
             dir_data['children'].append(
                 {
                     'type': 'aimodel',
+                    'type_display': 'AI model',
                     'display': aimodel.display,
                     'dir': _dir.id,
                     'id': aimodel.id,
@@ -40,6 +45,7 @@ def get_filesystem(parent: Dir = None, level: int = 0) -> list[dict]:
             dir_data['children'].append(
                 {
                     'type': 'prompt',
+                    'type_display': 'prompt',
                     'display': prompt.display,
                     'dir': _dir.id,
                     'id': prompt.id,
@@ -65,453 +71,323 @@ class ProjectView(View):
         )
 
 
-class RenderFilesystemMixin:
-    """Mixin to render the filesystem view."""
+class ItemView(View):
+    """Base view for item operations."""
+
+    model: type[ItemMixin]
+    template_prefix: str
+    view_name: str
+    get_actions: dict[str, Callable]
+    post_actions: dict[str, Callable]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.get_actions = {
+            'add': self.add_form,
+            'copy': self.copy_form,
+            'move': self.move_form,
+            'delete': self.delete_form,
+            'rename': self.rename_form,
+        }
+        self.post_actions = {
+            'add': self.add,
+            'copy': self.copy,
+            'move': self.move,
+            'delete': self.delete,
+            'rename': self.rename,
+        }
+
+    def get(self, request: HttpRequest) -> HttpResponse:
+        """Handles GET requests."""
+
+        action = request.GET.get('action')
+        handler = self.get_actions.get(action)
+        if handler:
+            return handler(request)
+        return HttpResponse('Invalid action', status=400)
+
+    def post(self, request: HttpRequest) -> HttpResponse:
+        """Handles POST requests."""
+
+        action = request.POST.get('action')
+        handler = self.post_actions.get(action)
+        if handler:
+            return handler(request)
+        return HttpResponse('Invalid action', status=400)
+
+    def add_form(self, request: HttpRequest) -> HttpResponse:
+        """Renders the form for adding a new item."""
+        form_class = AddEditForm.get_form_class(self.model)
+        form = form_class(
+            initial={'dir_id': request.GET.get('dir_id')}, initial_creation=True
+        )
+        return self.render_form(request, form, 'add')
+
+    def add(self, request: HttpRequest) -> HttpResponse:
+        """Adds a new item to the database."""
+        form_class = AddEditForm.get_form_class(self.model)
+        form = form_class(request.POST, initial_creation=True)
+        return self.process_form(request, form, 'add')
+
+    def copy_form(self, request: HttpRequest) -> HttpResponse:
+        """Renders the form for copying an existing item."""
+        item = get_object_or_404(
+            self.model, id=request.GET.get(f'{self.model._meta.model_name}_id')
+        )
+        form = CopyForm(item=item)
+        return self.render_form(request, form, 'copy', {'item': item})
+
+    def copy(self, request: HttpRequest) -> HttpResponse:
+        """Copies an existing item to a new directory, including all children."""
+        item = get_object_or_404(
+            self.model, id=request.POST.get(f'{self.model._meta.model_name}_id')
+        )
+        form = CopyForm(request.POST, item=item)
+        if form.is_valid():
+            form.save()
+            return self.render_filesystem(request)
+        return self.render_form(request, form, 'copy', {'item': item})
+
+    def move_form(self, request: HttpRequest) -> HttpResponse:
+        """Renders the form for moving an existing item."""
+        item = get_object_or_404(
+            self.model, id=request.GET.get(f'{self.model._meta.model_name}_id')
+        )
+        dirs = Dir.objects.exclude(id=item.dir.id if item.dir else None)
+        return self.render_form(request, None, 'move', {'item': item, 'dirs': dirs})
+
+    def move(self, request: HttpRequest) -> HttpResponse:
+        """Moves an existing item to a new directory."""
+        item = get_object_or_404(
+            self.model, id=request.POST.get(f'{self.model._meta.model_name}_id')
+        )
+        new_dir_id = request.POST.get('new_dir')
+
+        if new_dir_id == 'None':
+            item.dir = None
+        elif new_dir_id:
+            item.dir = get_object_or_404(Dir, id=new_dir_id)
+        else:
+            return HttpResponseBadRequest('No directory selected')
+
+        item.save()
+        return self.render_filesystem(request)
+
+    def delete_form(self, request: HttpRequest) -> HttpResponse:
+        """Renders the form for deleting an item."""
+        item = get_object_or_404(
+            self.model, id=request.GET.get(f'{self.model._meta.model_name}_id')
+        )
+        return self.render_form(request, None, 'delete', {'item': item})
+
+    def delete(self, request: HttpRequest) -> HttpResponse:
+        """Deletes an item from the database."""
+        item = get_object_or_404(
+            self.model, id=request.POST.get(f'{self.model._meta.model_name}_id')
+        )
+        item.delete()
+        return self.render_filesystem(request)
+
+    def rename_form(self, request: HttpRequest) -> HttpResponse:
+        """Renders the form for renaming an existing item."""
+        item = get_object_or_404(
+            self.model, id=request.GET.get(f'{self.model._meta.model_name}_id')
+        )
+        return self.render_form(request, None, 'rename', {'item': item})
+
+    def rename(self, request: HttpRequest) -> HttpResponse:
+        """Renames an existing item."""
+        item = get_object_or_404(
+            self.model, id=request.POST.get(f'{self.model._meta.model_name}_id')
+        )
+        new_name = request.POST.get('name')
+        if new_name:
+            item.display = new_name
+            item.save()
+            return self.render_filesystem(request)
+        return self.render_form(
+            request, None, 'rename', {'item': item, 'error': 'Name cannot be empty'}
+        )
+
+    def render_form(
+        self,
+        request: HttpRequest,
+        form: ModelForm,
+        action: str,
+        extra_context: dict = None,
+    ) -> HttpResponse:
+        """Renders a form with the given context."""
+        context = {
+            'form': form,
+            'item_type': self.model._meta.model_name,
+            'item_verbose_name': self.model._meta.verbose_name,
+            'view_name': self.view_name,
+            'action': action,
+        }
+        if extra_context:
+            context.update(extra_context)
+        return render(request, f'modal/{action}.html', context)
+
+    def process_form(
+        self, request: HttpRequest, form: ModelForm, action: str
+    ) -> HttpResponse:
+        """Processes a form submission."""
+        if form.is_valid():
+            form.save()
+            return self.render_filesystem(request)
+        return self.render_form(request, form, action)
 
     def render_filesystem(self, request: HttpRequest) -> HttpResponse:
-        """Renders the filesystem view."""
+        """Renders the filesystem structure."""
         filesystem = get_filesystem()
         dirs = Dir.objects.all()
-        html = render_to_string(
+        return render(
+            request,
             'filesystem.html',
             {
                 'filesystem': filesystem,
                 'dirs': dirs,
                 'level': 0,
             },
-            request=request,
         )
-        return HttpResponse(html)
 
 
-class DirView(View, RenderFilesystemMixin):
+class ViewCardMixin:
+    """Mixin to provide view card functionality for item views."""
+
+    model: type[ItemMixin]
+    template_prefix: str
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.get_actions['view'] = self.view
+
+    def view(self, request: HttpRequest) -> HttpResponse:
+        """Renders the card for an item."""
+        item_id = request.GET.get('id')
+        if not item_id:
+            return HttpResponseBadRequest('No item ID provided')
+        print(item_id)
+        print(self.model)
+        item = get_object_or_404(self.model, id=item_id)
+        print(item)
+        return render(
+            request,
+            f'{self.template_prefix}/card.html',
+            {self.model._meta.model_name: item},
+        )
+
+
+class EditMixin:
+    """Mixin to provide edit functionality for item views."""
+
+    model: type[ItemMixin]
+    template_prefix: str
+    view_name: str
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.get_actions['edit'] = self.edit_form
+        self.post_actions['edit'] = self.edit
+
+    def edit_form(self, request: HttpRequest) -> HttpResponse:
+        """Renders the form for editing an existing item."""
+        item = get_object_or_404(
+            self.model, id=request.GET.get(f'{self.model._meta.model_name}_id')
+        )
+        form_class = AddEditForm.get_form_class(self.model)
+        form = form_class(instance=item)
+        return render(
+            request,
+            f'{self.template_prefix}/edit.html',
+            {
+                'form': form,
+                'item_type': self.model._meta.model_name,
+                'item_verbose_name': self.model._meta.verbose_name,
+                'view_name': self.view_name,
+                'action': 'edit',
+                self.model._meta.model_name: item,
+            },
+        )
+
+    def edit(self, request: HttpRequest) -> HttpResponse:
+        """Saves changes to an existing item."""
+        item = get_object_or_404(
+            self.model, id=request.POST.get(f'{self.model._meta.model_name}_id')
+        )
+        form_class = AddEditForm.get_form_class(self.model)
+        form = form_class(request.POST, instance=item)
+        if form.is_valid():
+            form.save()
+            return self.render_filesystem(request)
+        return self.edit_form(request)
+
+
+class SaveMixin:
+    """Mixin to provide save functionality for item views."""
+
+    model: type[ItemMixin]
+    template_prefix: str
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.post_actions['save'] = self.save
+
+    def save(self, request: HttpRequest) -> HttpResponse:
+        """Saves changes to an existing item."""
+        item_id = request.POST.get(f'{self.model._meta.model_name}_id')
+        item = get_object_or_404(self.model, id=item_id)
+        form = AddEditForm.get_form_class(self.model)(request.POST, instance=item)
+        if form.is_valid():
+            form.save()
+            return render(
+                request,
+                f'{self.template_prefix}/card.html',
+                {self.model._meta.model_name: item},
+            )
+        else:
+            return HttpResponseBadRequest('Invalid form data')
+
+
+class DirView(ItemView):
     """View for directory operations."""
 
-    def get(self, request: HttpRequest) -> HttpResponse:
-        """Handles GET requests."""
-        action = request.GET.get('action')
+    model = Dir
+    template_prefix = 'dir'
+    view_name = 'dir'
 
-        match action:
-            case 'view':
-                return self.view_dir(request)
-            case 'add':
-                return self.add_dir_form(request)
-            case 'delete':
-                return self.delete_dir_form(request)
-            case 'rename':
-                return self.rename_dir_form(request)
-            case 'copy':
-                return self.copy_dir_form(request)
-            case 'move':
-                return self.move_dir_form(request)
-            case _:
-                return HttpResponse('Invalid action', status=400)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.get_actions['view'] = self.view
 
-    def post(self, request: HttpRequest) -> HttpResponse:
-        """Handles POST requests."""
-        action = request.POST.get('action')
-
-        match action:
-            case 'add':
-                return self.add_dir(request)
-            case 'delete':
-                return self.delete_dir(request)
-            case 'rename':
-                return self.rename_dir(request)
-            case 'copy':
-                return self.copy_dir(request)
-            case 'move':
-                return self.move_dir(request)
-            case _:
-                return HttpResponse('Invalid action', status=400)
-
-    def view_dir(self, request: HttpRequest) -> HttpResponse:
-        dir_id = request.GET.get('dir_id')
+    def view(self, request: HttpRequest) -> HttpResponse:
+        dir_id = request.GET.get('id')
         _dir = get_object_or_404(Dir, id=dir_id)
         prompts = Prompt.objects.filter(dir=_dir)
         aimodels = AIModel.objects.filter(dir=_dir)
 
-        html = render_to_string(
+        return render(
+            request,
             'dir/dir.html',
             {
                 'dir': _dir,
                 'prompts': prompts,
                 'aimodels': aimodels,
             },
-            request=request,
         )
-        return HttpResponse(html)
-
-    def add_dir_form(self, request: HttpRequest) -> HttpResponse:
-        """Renders the form to add a new directory."""
-        parent_id = request.GET.get('parent_id', None)
-        html = render_to_string(
-            'dir/add.html', {'parent_id': parent_id}, request=request
-        )
-        return HttpResponse(html)
-
-    def delete_dir_form(self, request: HttpRequest) -> HttpResponse:
-        """Renders the form to delete a directory."""
-        dir_id = request.GET.get('dir_id')
-        html = render_to_string('dir/delete.html', {'dir_id': dir_id}, request=request)
-        return HttpResponse(html)
-
-    def rename_dir_form(self, request: HttpRequest) -> HttpResponse:
-        """Renders the form to rename a directory."""
-        dir_id = request.GET.get('dir_id')
-        html = render_to_string('dir/rename.html', {'dir_id': dir_id}, request=request)
-        return HttpResponse(html)
-
-    def copy_dir_form(self, request: HttpRequest) -> HttpResponse:
-        """Renders the form to copy a directory."""
-        dir_id = request.GET.get('dir_id')
-        html = render_to_string('dir/copy.html', {'dir_id': dir_id}, request=request)
-        return HttpResponse(html)
-
-    def move_dir_form(self, request: HttpRequest) -> HttpResponse:
-        """Renders the form to move a directory."""
-        dir_id = request.GET.get('dir_id')
-        valid_dirs = Dir.objects.exclude(id=dir_id)
-        html = render_to_string(
-            'dir/move.html',
-            {'dir_id': dir_id, 'valid_dirs': valid_dirs},
-            request=request,
-        )
-        return HttpResponse(html)
-
-    def add_dir(self, request: HttpRequest) -> HttpResponse:
-        """Adds a new directory to the filesystem."""
-        parent_id = request.POST.get('parent_dir_id')
-        dir_name = request.POST.get('dir_name')
-
-        if parent_id == 'None':
-            parent_id = None
-
-        parent_dir = Dir.objects.get(id=parent_id) if parent_id else None
-        Dir.objects.create(dir=parent_dir, display=dir_name)
-        return self.render_filesystem(request)
-
-    def delete_dir(self, request: HttpRequest) -> HttpResponse:
-        """Deletes a directory from the filesystem."""
-        dir_id = request.POST.get('dir_id')
-        _dir = get_object_or_404(Dir, id=dir_id)
-        _dir.delete()
-        return self.render_filesystem(request)
-
-    def rename_dir(self, request: HttpRequest) -> HttpResponse:
-        """Renames a directory in the filesystem."""
-        dir_id = request.POST.get('dir_id')
-        new_dir_name = request.POST.get('new_dir_name')
-        _dir = get_object_or_404(Dir, id=dir_id)
-        _dir.display = new_dir_name
-        _dir.save()
-        return self.render_filesystem(request)
-
-    def copy_dir(self, request: HttpRequest) -> HttpResponse:
-        """Copies a directory in the filesystem."""
-        dir_id = request.POST.get('dir_id')
-        original_dir = get_object_or_404(Dir, id=dir_id)
-        parent_dir = original_dir.dir
-
-        def _copy_dir(original: Dir, parent: Dir = None) -> Dir:
-            new_dir = Dir.objects.create(dir=parent, display=original.display)
-            for prompt in original.prompts.all():
-                new_prompt = Prompt.objects.create(
-                    display=prompt.display, text=prompt.text, dir=new_dir
-                )
-                new_prompt.aimodels.set(prompt.aimodels.all())
-                new_prompt.fields.set(prompt.fields.all())
-                new_prompt.save()
-            for aimodel in original.aimodels.all():
-                AIModel.objects.create(display=aimodel.display, dir=new_dir)
-            for child in original.children.all():
-                _copy_dir(child, new_dir)
-            return new_dir
-
-        _copy_dir(original_dir, parent_dir)
-        return self.render_filesystem(request)
-
-    def move_dir(self, request: HttpRequest) -> HttpResponse:
-        """Moves a directory in the filesystem."""
-        dir_id = request.POST.get('dir_id')
-        new_parent_id = request.POST.get('new_parent_dir_id')
-        new_parent_dir = (
-            None
-            if new_parent_id == 'None'
-            else get_object_or_404(Dir, id=new_parent_id)
-        )
-        _dir = get_object_or_404(Dir, id=dir_id)
-        _dir.dir = new_parent_dir
-        _dir.save()
-        return self.render_filesystem(request)
 
 
-class PromptView(View, RenderFilesystemMixin):
+class PromptView(ViewCardMixin, SaveMixin, EditMixin, ItemView):
     """View for prompt operations."""
 
-    def get(self, request: HttpRequest) -> HttpResponse:
-        """Handles GET requests."""
-        action = request.GET.get('action')
-
-        match action:
-            case 'add':
-                return self.add_prompt_form(request)
-            case 'delete':
-                return self.delete_prompt_form(request)
-            case 'copy':
-                return self.copy_prompt_form(request)
-            case 'move':
-                return self.move_prompt_form(request)
-            case 'edit':
-                return self.edit_prompt(request)
-            case 'view':
-                return self.view_prompt(request)
-            case _:
-                return HttpResponse('Invalid action', status=400)
-
-    def post(self, request: HttpRequest) -> HttpResponse:
-        """Handles POST requests."""
-        action = request.POST.get('action')
-
-        match action:
-            case 'add':
-                return self.add_prompt(request)
-            case 'delete':
-                return self.delete_prompt(request)
-            case 'copy':
-                return self.copy_prompt(request)
-            case 'move':
-                return self.move_prompt(request)
-            case 'save':
-                return self.save_prompt(request)
-            case _:
-                return HttpResponse('Invalid action', status=400)
-
-    def view_prompt(self, request: HttpRequest) -> HttpResponse:
-        """Renders the prompt card view."""
-        prompt_id = request.GET.get('prompt_id')
-        prompt = get_object_or_404(Prompt, id=prompt_id)
-        html = render_to_string('prompt/card.html', {'prompt': prompt}, request=request)
-        return HttpResponse(html)
-
-    def add_prompt_form(self, request: HttpRequest) -> HttpResponse:
-        """Renders the form to add a new prompt."""
-        dir_id = request.GET.get('dir_id')
-        html = render_to_string('prompt/add.html', {'dir_id': dir_id}, request=request)
-        return HttpResponse(html)
-
-    def delete_prompt_form(self, request: HttpRequest) -> HttpResponse:
-        """Renders the form to delete a prompt."""
-        prompt_id = request.GET.get('prompt_id')
-        html = render_to_string(
-            'prompt/delete.html', {'prompt_id': prompt_id}, request=request
-        )
-        return HttpResponse(html)
-
-    def copy_prompt_form(self, request: HttpRequest) -> HttpResponse:
-        """Renders the form to copy a prompt."""
-        prompt_id = request.GET.get('prompt_id')
-        html = render_to_string(
-            'prompt/copy.html', {'prompt_id': prompt_id}, request=request
-        )
-        return HttpResponse(html)
-
-    def move_prompt_form(self, request: HttpRequest) -> HttpResponse:
-        """Renders the form to move a prompt."""
-        prompt_id = request.GET.get('prompt_id')
-        dirs = Dir.objects.all()
-        html = render_to_string(
-            'prompt/move.html',
-            {'prompt_id': prompt_id, 'dirs': dirs},
-            request=request,
-        )
-        return HttpResponse(html)
-
-    def add_prompt(self, request: HttpRequest) -> HttpResponse:
-        """Adds a new prompt to the filesystem."""
-        display_name = request.POST.get('prompt_display')
-        dir_id = request.POST.get('dir_id')
-        _dir = get_object_or_404(Dir, id=dir_id)
-        Prompt.objects.create(display=display_name, dir=_dir)
-        return self.render_filesystem(request)
-
-    def delete_prompt(self, request: HttpRequest) -> HttpResponse:
-        """Deletes a prompt from the filesystem."""
-        prompt_id = request.POST.get('prompt_id')
-        prompt = get_object_or_404(Prompt, id=prompt_id)
-        prompt.delete()
-        return self.render_filesystem(request)
-
-    def copy_prompt(self, request: HttpRequest) -> HttpResponse:
-        """Copies a prompt in the filesystem."""
-        prompt_id = request.POST.get('prompt_id')
-        prompt = get_object_or_404(Prompt, id=prompt_id)
-        prompt.pk = None
-        prompt.save()
-        return self.render_filesystem(request)
-
-    def move_prompt(self, request: HttpRequest) -> HttpResponse:
-        """Moves a prompt in the filesystem."""
-        prompt_id = request.POST.get('prompt_id')
-        new_dir_id = request.POST.get('new_dir_id')
-        new_dir = get_object_or_404(Dir, id=new_dir_id)
-        prompt = get_object_or_404(Prompt, id=prompt_id)
-        prompt.dir = new_dir
-        prompt.save()
-        return self.render_filesystem(request)
-
-    def edit_prompt(self, request: HttpRequest) -> HttpResponse:
-        """Renders the form to edit a prompt."""
-        prompt_id = request.GET.get('prompt_id')
-        prompt = get_object_or_404(Prompt, id=prompt_id)
-        all_aimodels = AIModel.objects.all()
-        html = render_to_string(
-            'prompt/edit.html',
-            {'prompt': prompt, 'all_aimodels': all_aimodels},
-            request=request,
-        )
-        return HttpResponse(html)
-
-    def save_prompt(self, request: HttpRequest) -> HttpResponse:
-        """Saves changes to an existing prompt."""
-        prompt_id = request.POST.get('prompt_id')
-        prompt = get_object_or_404(Prompt, id=prompt_id)
-        prompt.display = request.POST.get('display')
-        prompt.text = request.POST.get('text')
-        prompt.save()
-
-        # Update AIModels
-        selected_aimodels = request.POST.getlist('aimodels')
-        prompt.aimodels.set(selected_aimodels)
-
-        # Render the updated prompt card
-        html = render_to_string('prompt/card.html', {'prompt': prompt}, request=request)
-        return HttpResponse(html)
+    model = Prompt
+    template_prefix = 'prompt'
+    view_name = 'prompt'
 
 
-class AIView(View, RenderFilesystemMixin):
+class AIView(ViewCardMixin, SaveMixin, EditMixin, ItemView):
     """View for AI model operations."""
 
-    def get(self, request: HttpRequest) -> HttpResponse:
-        """Handles GET requests."""
-        action = request.GET.get('action')
-
-        match action:
-            case 'view':
-                return self.view_aimodel(request)
-            case 'add':
-                return self.add_aimodel_form(request)
-            case 'edit':
-                return self.edit_aimodel(request)
-            case 'copy':
-                return self.copy_aimodel_form(request)
-            case 'move':
-                return self.move_aimodel_form(request)
-            case 'delete':
-                return self.delete_aimodel_form(request)
-            case _:
-                return HttpResponse('Invalid action', status=400)
-
-    def post(self, request: HttpRequest) -> HttpResponse:
-        """Handles POST requests."""
-        action = request.POST.get('action')
-
-        match action:
-            case 'add':
-                return self.add_aimodel(request)
-            case 'save':
-                return self.save_aimodel(request)
-            case 'copy':
-                return self.copy_aimodel(request)
-            case 'move':
-                return self.move_aimodel(request)
-            case 'delete':
-                return self.delete_aimodel(request)
-            case _:
-                return HttpResponse('Invalid action', status=400)
-
-    def view_aimodel(self, request: HttpRequest) -> HttpResponse:
-        """Renders the AI model card view."""
-        aimodel_id = request.GET.get('aimodel_id')
-        aimodel = get_object_or_404(AIModel, id=aimodel_id)
-        html = render_to_string('ai/card.html', {'aimodel': aimodel}, request=request)
-        return HttpResponse(html)
-
-    def add_aimodel_form(self, request: HttpRequest) -> HttpResponse:
-        """Renders the form to add a new AI model."""
-        dir_id = request.GET.get('dir_id')
-        html = render_to_string('ai/add.html', {'dir_id': dir_id}, request=request)
-        return HttpResponse(html)
-
-    def edit_aimodel(self, request: HttpRequest) -> HttpResponse:
-        """Renders the form to edit an AI model."""
-        aimodel_id = request.GET.get('aimodel_id')
-        aimodel = get_object_or_404(AIModel, id=aimodel_id)
-        html = render_to_string('ai/edit.html', {'aimodel': aimodel}, request=request)
-        return HttpResponse(html)
-
-    def add_aimodel(self, request: HttpRequest) -> HttpResponse:
-        """Adds a new AI model to the filesystem."""
-        display_name = request.POST.get('aimodel_display')
-        dir_id = request.POST.get('dir_id')
-        _dir = get_object_or_404(Dir, id=dir_id)
-        AIModel.objects.create(display=display_name, dir=_dir)
-        return self.render_filesystem(request)
-
-    def save_aimodel(self, request: HttpRequest) -> HttpResponse:
-        """Saves changes to an existing AI model."""
-        aimodel_id = request.POST.get('aimodel_id')
-        aimodel = get_object_or_404(AIModel, id=aimodel_id)
-        aimodel.display = request.POST.get('display')
-        aimodel.save()
-        html = render_to_string('ai/card.html', {'aimodel': aimodel}, request=request)
-        return HttpResponse(html)
-
-    def copy_aimodel_form(self, request: HttpRequest) -> HttpResponse:
-        """Renders the form to copy an AI model."""
-        aimodel_id = request.GET.get('aimodel_id')
-        aimodel = get_object_or_404(AIModel, id=aimodel_id)
-        html = render_to_string('ai/copy.html', {'aimodel': aimodel}, request=request)
-        return HttpResponse(html)
-
-    def move_aimodel_form(self, request: HttpRequest) -> HttpResponse:
-        """Renders the form to move an AI model."""
-        aimodel_id = request.GET.get('aimodel_id')
-        aimodel = get_object_or_404(AIModel, id=aimodel_id)
-        dirs = Dir.objects.exclude(id=aimodel.dir.id)
-        html = render_to_string(
-            'ai/move.html', {'aimodel': aimodel, 'dirs': dirs}, request=request
-        )
-        return HttpResponse(html)
-
-    def delete_aimodel_form(self, request: HttpRequest) -> HttpResponse:
-        """Renders the form to delete an AI model."""
-        aimodel_id = request.GET.get('aimodel_id')
-        aimodel = get_object_or_404(AIModel, id=aimodel_id)
-        html = render_to_string('ai/delete.html', {'aimodel': aimodel}, request=request)
-        return HttpResponse(html)
-
-    def copy_aimodel(self, request: HttpRequest) -> HttpResponse:
-        """Copies an AI model."""
-        aimodel_id = request.POST.get('aimodel_id')
-        aimodel = get_object_or_404(AIModel, id=aimodel_id)
-        aimodel.pk = None
-        aimodel.save()
-        return self.render_filesystem(request)
-
-    def move_aimodel(self, request: HttpRequest) -> HttpResponse:
-        """Moves an AI model to a different directory."""
-        aimodel_id = request.POST.get('aimodel_id')
-        new_dir_id = request.POST.get('new_dir_id')
-        aimodel = get_object_or_404(AIModel, id=aimodel_id)
-        new_dir = get_object_or_404(Dir, id=new_dir_id)
-        aimodel.dir = new_dir
-        aimodel.save()
-        return self.render_filesystem(request)
-
-    def delete_aimodel(self, request: HttpRequest) -> HttpResponse:
-        """Deletes an AI model."""
-        aimodel_id = request.POST.get('aimodel_id')
-        aimodel = get_object_or_404(AIModel, id=aimodel_id)
-        aimodel.delete()
-        return self.render_filesystem(request)
+    model = AIModel
+    template_prefix = 'ai'
+    view_name = 'aimodel'
