@@ -108,6 +108,38 @@ class AddEditPromptForm(AddEditForm):
             'aimodels': forms.CheckboxSelectMultiple(),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        dir_id = None
+        if self.instance.pk:
+            dir_id = self.instance.dir_id
+        else:
+            dir_id = self.initial.get('dir_id') or self.data.get('dir_id')
+
+        if aimodels := self.fields.get('aimodels'):
+            aimodels.queryset = Prompt.get_ancestor_aimodels_for_dir(dir_id)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        aimodels = cleaned_data.get('aimodels')
+
+        if aimodels:
+            # Ensure all selected AI models are permissible
+            permissible_ais = set(self.instance.get_ancestor_aimodels())
+            selected_ais = set(aimodels)
+
+            if not selected_ais.issubset(permissible_ais):
+                self.add_error(
+                    'aimodels',
+                    (
+                        "Some selected AI models are not in this prompt's "
+                        'ancestor directories.'
+                    ),
+                )
+
+        return cleaned_data
+
 
 class CopyForm(forms.Form):
     """Form for copying an item to a new directory."""

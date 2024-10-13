@@ -1,6 +1,7 @@
 from typing import Union
 
 from django.db import models
+from django.db.models import QuerySet
 
 
 class ItemMixin(models.Model):
@@ -80,7 +81,7 @@ class Field(models.Model):
 
     template = models.CharField(max_length=255)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'Field {self.template}'
 
 
@@ -95,5 +96,38 @@ class Prompt(ItemMixin):
         verbose_name = 'prompt'
         verbose_name_plural = 'prompts'
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'{self.display}: {self.text[:50]}...'
+
+    def save(self, *args, **kwargs) -> None:
+        """Saves the model and updates the AI models."""
+        super().save(*args, **kwargs)
+        self._update_aimodels()
+
+    def get_ancestor_aimodels(self) -> QuerySet[AIModel]:
+        """Returns all AIModels in the ancestor directories."""
+        return self.get_ancestor_aimodels_for_dir(self.dir_id)
+
+    @staticmethod
+    def get_ancestor_aimodels_for_dir(dir_id: int | None) -> QuerySet[AIModel]:
+        """Returns all AIModels in the requested directory's ancestors.
+
+        If dir_id is None, it returns all AIModels that don't have a directory.
+        """
+        if dir_id is None:
+            return AIModel.objects.filter(dir__isnull=True)
+
+        dir_instance = Dir.objects.get(id=dir_id)
+        ancestors = dir_instance.get_ancestors()
+        ancestors.append(dir_instance)
+
+        return AIModel.objects.filter(dir__in=ancestors)
+
+    def _update_aimodels(self) -> None:
+        """Update AIModels so only those in the ancestor directories are included."""
+        valid_aimodel_ids = set(
+            self.get_ancestor_aimodels().values_list('id', flat=True)
+        )
+        aimodels_to_remove = self.aimodels.exclude(id__in=valid_aimodel_ids)
+
+        self.aimodels.remove(*aimodels_to_remove)

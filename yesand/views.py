@@ -9,7 +9,7 @@ from .forms import AddEditForm, CopyForm
 from .models import AIModel, Dir, ItemMixin, Prompt
 
 
-def get_filesystem(parent: 'Dir' = None, level: int = 0):
+def get_filesystem(parent: 'Dir' = None, level: int = 0) -> list[dict]:
     """Extracts the filesystem structure from the database."""
     tree = []
 
@@ -24,7 +24,9 @@ def get_filesystem(parent: 'Dir' = None, level: int = 0):
             'level': level,
         }
 
-    def add_children(model: ItemMixin, item_type: str, parent_dir: 'Dir', level: int):
+    def add_children(
+        model: ItemMixin, item_type: str, parent_dir: 'Dir', level: int
+    ) -> list[dict]:
         """Adds children of a given type to the tree."""
         return [
             create_item_dict(item=item, item_type=item_type, level=level)
