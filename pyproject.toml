@@ -37,6 +37,8 @@ select = [
     "A",
     "DJ",
     "TCH",
+    "T20",
+    "B",
 ]
 
 [tool.ruff.lint.pydocstyle]

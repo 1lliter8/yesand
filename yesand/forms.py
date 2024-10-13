@@ -1,7 +1,7 @@
 from typing import Any
 
 from django import forms
-from django.db import transaction
+from django.db import models, transaction
 from django.db.models import Model
 from django.forms import ModelForm
 
@@ -42,14 +42,34 @@ class AddEditForm(ModelForm):
                 if field_name not in required_fields:
                     del self.fields[field_name]
 
+        # Set up M2M fields
+        for field_name in self.fields.keys():
+            model_field = self._meta.model._meta.get_field(field_name)
+            if isinstance(model_field, models.ManyToManyField):
+                self.fields[
+                    field_name
+                ].queryset = model_field.related_model.objects.all()
+
     def save(self, commit: bool = True) -> Any:
         """Save the form and set the dir_id if it was passed in."""
         instance = super().save(commit=False)
         if self.cleaned_data.get('dir_id'):
             instance.dir_id = self.cleaned_data['dir_id']
+
         if commit:
             instance.save()
+            self._save_m2m()
+
         return instance
+
+    def _save_m2m(self):
+        """Save many-to-many relationships."""
+        for field_name in self.fields.keys():
+            model_field = self._meta.model._meta.get_field(field_name)
+            if isinstance(model_field, models.ManyToManyField):
+                getattr(self.instance, field_name).set(
+                    self.cleaned_data.get(field_name, [])
+                )
 
     @classmethod
     def get_form_class(cls, model: type[Model]) -> type['AddEditForm'] | None:

@@ -253,10 +253,7 @@ class ViewCardMixin:
         item_id = request.GET.get('id')
         if not item_id:
             return HttpResponseBadRequest('No item ID provided')
-        print(item_id)
-        print(self.model)
         item = get_object_or_404(self.model, id=item_id)
-        print(item)
         return render(
             request,
             f'{self.template_prefix}/card.html',
