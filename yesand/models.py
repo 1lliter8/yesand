@@ -7,7 +7,13 @@ class ItemMixin(models.Model):
     """A mixin for items that can be used with ItemView."""
 
     display = models.CharField(max_length=255)
-    dir = models.ForeignKey('Dir', on_delete=models.CASCADE, related_name='%(class)ss')
+    dir = models.ForeignKey(
+        'Dir',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='%(class)ss',
+    )
 
     class Meta:
         abstract = True

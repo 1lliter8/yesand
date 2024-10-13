@@ -9,51 +9,37 @@ from .forms import AddEditForm, CopyForm
 from .models import AIModel, Dir, ItemMixin, Prompt
 
 
-def get_filesystem(parent: Dir = None, level: int = 0) -> list[dict]:
+def get_filesystem(parent: 'Dir' = None, level: int = 0):
     """Extracts the filesystem structure from the database."""
     tree = []
+
+    def create_item_dict(item: ItemMixin, item_type: str, level: int) -> dict:
+        """Creates a dictionary representation of an item."""
+        return {
+            'type': item_type,
+            'type_display': item_type.replace('_', ' '),
+            'display': item.display,
+            'dir': parent.id if parent else None,
+            'id': item.id,
+            'level': level,
+        }
+
+    def add_children(model: ItemMixin, item_type: str, parent_dir: 'Dir', level: int):
+        """Adds children of a given type to the tree."""
+        return [
+            create_item_dict(item=item, item_type=item_type, level=level)
+            for item in model.objects.filter(dir=parent_dir).order_by('display')
+        ]
+
     dirs = Dir.objects.filter(dir=parent)
     for _dir in dirs:
-        # Create a dictionary for the current directory
-        dir_data = {
-            'type': 'dir',
-            'type_display': 'directory',
-            'display': _dir.display,
-            'level': level,
-            'id': _dir.id,
-            'children': [],
-        }
-        dir_data['children'].extend(get_filesystem(parent=_dir, level=level + 1))
-
-        # Add AIModels to the directory
-        aimodels = AIModel.objects.filter(dir=_dir).order_by('display')
-        for aimodel in aimodels:
-            dir_data['children'].append(
-                {
-                    'type': 'aimodel',
-                    'type_display': 'AI model',
-                    'display': aimodel.display,
-                    'dir': _dir.id,
-                    'id': aimodel.id,
-                    'level': level + 1,
-                }
-            )
-
-        # Add Prompts to the directory
-        prompts = Prompt.objects.filter(dir=_dir).order_by('display')
-        for prompt in prompts:
-            dir_data['children'].append(
-                {
-                    'type': 'prompt',
-                    'type_display': 'prompt',
-                    'display': prompt.display,
-                    'dir': _dir.id,
-                    'id': prompt.id,
-                    'level': level + 1,
-                }
-            )
-
+        dir_data = create_item_dict(_dir, 'dir', level)
+        dir_data['children'] = get_filesystem(parent=_dir, level=level + 1)
         tree.append(dir_data)
+
+    tree.extend(add_children(AIModel, 'aimodel', parent, level + 1))
+    tree.extend(add_children(Prompt, 'prompt', parent, level + 1))
+
     return tree
 
 

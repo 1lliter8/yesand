@@ -11,17 +11,22 @@
             <main id="main-project-content"
                   class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
                 <div id="welcome-message">
-                    <h1>Welcome</h1>
-                    <p>Select a directory from the sidebar to view its contents.</p>
+                    <h1>Welcome to yes&</h1>
+                    <p>
+                        yes& is a tool to help organise your AI endpoints and their prompts. Your goal is to organise your resources in a way that matches the project they power.
+                    </p>
                     {% if not filesystem %}
-                        <div class="alert alert-info" role="alert">Your project is empty. Start by adding a new directory.</div>
-                        <button class="btn btn-primary"
-                                hx-get="{% url 'dir' %}?action=add"
-                                hx-target="#modal-content">
-                            {% bs_icon 'folder-plus' extra_classes='me-2' %}
-                            Add Root Directory
-                        </button>
+                        <p>You've not made any projects yet!</p>
+                    {% else %}
+                        <p>Select a directory from the sidebar to view its contents.</p>
                     {% endif %}
+                    <ul>
+                        <li>Add directories to organise your AIs and prompts</li>
+                        <li>Add a prompt</li>
+                        <li>Add an AI. All prompts at this level or lower are appropriate for this AI</li>
+                        <li>Add a key. All resources at this level or lower can be accessed with this API key</li>
+                    </ul>
+                    <p>In your AI-backed project, call yes&'s endpoint to retrieve your prompts and AI configurations.</p>
                 </div>
             </main>
         </div>

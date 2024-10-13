@@ -60,7 +60,6 @@ _migrate = "poetry run python manage.py migrate"
 _resetmigrations="find yesand/migrations -type f ! -name '__init__.py' -delete"
 _resetdb = "rm -rf db.sqlite3"
 _bootstrap_admin = "poetry run python manage.py loaddata admin_interface_theme_bootstrap.json"
-_add_default_project = "poetry run python manage.py add_default_dir"
 
 [tool.poe.tasks.test]
 cmd = "pytest -v"
@@ -92,11 +91,10 @@ sequence = [
   "_resetdb", 
   "_makemigrations",
   "_migrate",
-  "_add_default_project",
   "_bootstrap_admin", 
   "createsuperuser"
 ]
-help = "Reset the database, migrate, reskin admin, add a default project, make a new superuser."
+help = "Reset the database, migrate, reskin admin, make a new superuser."
 
 [tool.poe.tasks.tree]
 cmd = "tree -I '__*'"

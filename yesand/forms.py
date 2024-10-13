@@ -104,8 +104,6 @@ class CopyForm(forms.Form):
     def clean_new_dir(self) -> Dir:
         """Ensure the new directory is not the same as the current directory."""
         new_dir = self.cleaned_data['new_dir']
-        if new_dir == self.item.dir:
-            raise forms.ValidationError('Cannot copy to the same directory.')
         return new_dir
 
     @transaction.atomic
