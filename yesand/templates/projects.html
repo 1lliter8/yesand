@@ -10,41 +10,15 @@
             </nav>
             <main id="main-project-content"
                   class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-                <div id="welcome-message">
-                    <h1>Welcome to yes&</h1>
-                    <p>yes& is a tool to help organise your AI endpoints and their prompts.</p>
-                    <p>Your goal is to organise your resources in a way that matches the project they power.</p>
-                    {% if not filesystem %}
-                        <p>You've not made any projects yet!</p>
-                    {% else %}
-                        <p>Select a directory from the sidebar to view its contents.</p>
-                    {% endif %}
-                    <ul>
-                        <li>
-                            📁 <a href="#"
-    hx-get="{% url 'dir' %}?action=add"
-    hx-target="#modal-content"
-    data-bs-toggle="modal"
-    data-bs-target="#itemModal">Add directories</a> to organise your AIs and prompts
-                        </li>
-                        <li>
-                            🗨️ <a href="#"
-    hx-get="{% url 'prompt' %}?action=add"
-    hx-target="#modal-content"
-    data-bs-toggle="modal"
-    data-bs-target="#itemModal">Add a prompt</a>
-                        </li>
-                        <li>
-                            🤖 <a href="#"
-    hx-get="{% url 'aimodel' %}?action=add"
-    hx-target="#modal-content"
-    data-bs-toggle="modal"
-    data-bs-target="#itemModal">Add an AI</a>. All prompts at this level or lower are appropriate for this AI
-                        </li>
-                        <li>🔑 Add a key. All resources at this level or lower can be accessed with this API key</li>
-                    </ul>
-                    <p>In your AI-backed project, call yes&'s endpoint to retrieve your prompts and AI configurations.</p>
-                </div>
+                {% if dir %}
+                    {% include "dir/dir.html" with dir=dir prompts=prompts aimodels=aimodels %}
+                {% elif prompt %}
+                    {% include "prompt/card.html" with prompt=prompt %}
+                {% elif aimodel %}
+                    {% include "ai/card.html" with aimodel=aimodel %}
+                {% else %}
+                    {% include "welcome.html" %}
+                {% endif %}
             </main>
         </div>
     </div>
