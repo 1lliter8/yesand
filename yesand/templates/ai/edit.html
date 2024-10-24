@@ -1,4 +1,7 @@
 {% load bootstrap_icons %}
+{% block extra_head %}
+    {{ form.media.css }}
+{% endblock extra_head %}
 <div class="card mb-3" id="aimodel-card-{{ aimodel.id }}">
     <div class="card-body">
         <form hx-post="{% url 'aimodel' %}"
@@ -14,34 +17,43 @@
                         <li class="breadcrumb-item d-flex align-items-center">{% bs_icon 'folder' %}</li>
                         {% for dir in dirs %}
                             <li class="breadcrumb-item d-flex align-items-center">
-                                <a href="{% url 'dir' %}?action=view&id={{ dir.id }}"
-                                   hx-get="{% url 'aimodel' %}?action=view&id={{ aimodel.id }}"
-                                   hx-target="#aimodel-card-{{ aimodel.id }}"
-                                   hx-swap="outerHTML"
+                                <a href="#"
+                                   hx-get="{% url 'dir' %}?action=view&id={{ dir.id }}"
+                                   hx-target="#main-project-content"
+                                   hx-push-url="true"
                                    hx-confirm="Are you sure you want to cancel editing?">{{ dir.display }}</a>
                             </li>
                         {% endfor %}
                         <li class="breadcrumb-item d-flex align-items-center">
-                            <a href="{% url 'dir' %}?action=view&id={{ aimodel.dir.id }}"
-                               hx-get="{% url 'aimodel' %}?action=view&id={{ aimodel.id }}"
-                               hx-target="#aimodel-card-{{ aimodel.id }}"
-                               hx-swap="outerHTML"
+                            <a href="#"
+                               hx-get="{% url 'dir' %}?action=view&id={{ aimodel.dir.id }}"
+                               hx-target="#main-project-content"
+                               hx-push-url="true"
                                hx-confirm="Are you sure you want to cancel editing?"
                                aria-current="page">{{ aimodel.dir.display }}</a>
                         </li>
                     {% endwith %}
                 </ol>
             </nav>
-            <!-- Editable AI name -->
+            <!-- Editable AIModel display name -->
             <div class="row mb-3 align-items-center">
                 <div class="col-auto pe-2 d-flex align-items-center">{% bs_icon 'robot' %}</div>
-                <div class="col ps-0">
-                    <input type="text"
-                           class="form-control"
-                           name="display"
-                           value="{{ aimodel.display }}"
-                           required>
-                </div>
+                <div class="col ps-0">{{ form.display }}</div>
+            </div>
+            <!-- Editable endpoint -->
+            <div class="row mb-3 align-items-center">
+                <div class="col-auto pe-2 d-flex align-items-center">{% bs_icon 'link' %}</div>
+                <div class="col ps-0">{{ form.endpoint }}</div>
+            </div>
+            <!-- Editable API key -->
+            <div class="row mb-3 align-items-center">
+                <div class="col-auto pe-2 d-flex align-items-center">{% bs_icon 'key' %}</div>
+                <div class="col ps-0">{{ form.api_key }}</div>
+            </div>
+            <!-- Editable model parameters -->
+            <div class="row mb-3 align-items-top">
+                <div class="col-auto pe-2 d-flex align-items-top mt-1">{% bs_icon 'gear' %}</div>
+                <div class="col ps-0">{{ form.parameters }}</div>
             </div>
             <!-- Save and Cancel buttons -->
             <div class="row mt-3">
@@ -65,3 +77,6 @@
         </form>
     </div>
 </div>
+{% block extra_js %}
+    {{ form.media.js }}
+{% endblock extra_js %}

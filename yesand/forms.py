@@ -4,8 +4,50 @@ from django import forms
 from django.db import models, transaction
 from django.db.models import Model
 from django.forms import ModelForm
+from django_json_widget.widgets import JSONEditorWidget
 
 from .models import AIModel, Dir, Prompt
+
+# class PrettyJSONWidget(forms.Textarea):
+#     """A widget for displaying JSON in a pretty format."""
+
+#     def format_value(self, value):
+#         try:
+#             if isinstance(value, str):
+#                 value = json.loads(value)
+#             return json.dumps(value, indent=2, ensure_ascii=False, sort_keys=True)
+#         except (TypeError, ValueError):
+#             return super().format_value(value)
+
+#     def value_from_datadict(self, data, files, name):
+#         value = super().value_from_datadict(data, files, name)
+#         try:
+#             json.loads(value)
+#             return value
+#         except (TypeError, ValueError):
+#             return super().format_value(value)
+
+
+# class JSONFormField(forms.JSONField):
+#     """A form field for JSON data with a pretty widget."""
+
+#     widget = PrettyJSONWidget
+
+#     def to_python(self, value):
+#         if value in self.empty_values:
+#             return None
+#         try:
+#             if isinstance(value, str):
+#                 return json.loads(value)
+#             else:
+#                 return value
+#         except ValueError as e:
+#             raise ValidationError('Enter valid JSON') from e
+
+#     def prepare_value(self, value):
+#         if isinstance(value, (dict, list)):
+#             return json.dumps(value, indent=2, ensure_ascii=False, sort_keys=True)
+#         return value
 
 
 class AddEditForm(ModelForm):
@@ -33,22 +75,22 @@ class AddEditForm(ModelForm):
         if self.initial_creation:
             # Keep only required fields where blank and null are both False
             required_fields = ['display', 'dir_id']
-            for field_name, _ in self.fields.items():
-                model_field = self._meta.model._meta.get_field(field_name)
-                if not model_field.blank and not model_field.null:
-                    required_fields.append(field_name)
-
             for field_name in list(self.fields.keys()):
+                if field_name in self.Meta.model._meta.fields:
+                    model_field = self.Meta.model._meta.get_field(field_name)
+                    if not model_field.blank and not model_field.null:
+                        required_fields.append(field_name)
                 if field_name not in required_fields:
                     del self.fields[field_name]
 
         # Set up M2M fields
-        for field_name in self.fields.keys():
-            model_field = self._meta.model._meta.get_field(field_name)
-            if isinstance(model_field, models.ManyToManyField):
-                self.fields[
-                    field_name
-                ].queryset = model_field.related_model.objects.all()
+        for field_name in list(self.fields.keys()):
+            if field_name in self.Meta.model._meta.fields:
+                model_field = self.Meta.model._meta.get_field(field_name)
+                if isinstance(model_field, models.ManyToManyField):
+                    self.fields[
+                        field_name
+                    ].queryset = model_field.related_model.objects.all()
 
     def save(self, commit: bool = True) -> Any:
         """Save the form and set the dir_id if it was passed in."""
@@ -65,11 +107,12 @@ class AddEditForm(ModelForm):
     def _save_m2m(self):
         """Save many-to-many relationships."""
         for field_name in self.fields.keys():
-            model_field = self._meta.model._meta.get_field(field_name)
-            if isinstance(model_field, models.ManyToManyField):
-                getattr(self.instance, field_name).set(
-                    self.cleaned_data.get(field_name, [])
-                )
+            if field_name in self.Meta.model._meta.fields:
+                model_field = self.Meta.model._meta.get_field(field_name)
+                if isinstance(model_field, models.ManyToManyField):
+                    getattr(self.instance, field_name).set(
+                        self.cleaned_data.get(field_name, [])
+                    )
 
     @classmethod
     def get_form_class(cls, model: type[Model]) -> type['AddEditForm'] | None:
@@ -90,8 +133,47 @@ class AddEditDirForm(AddEditForm):
 class AddEditAIModelForm(AddEditForm):
     """Form for adding or editing AI models."""
 
+    api_key = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': 'form-control'}), required=False
+    )
+    # parameters = JSONFormField()
+
     class Meta(AddEditForm.Meta):
         model = AIModel
+        fields = ['display', 'endpoint', 'parameters']
+        widgets = {
+            'display': forms.TextInput(attrs={'class': 'form-control'}),
+            'endpoint': forms.TextInput(attrs={'class': 'form-control'}),
+            'parameters': JSONEditorWidget,
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.pk:
+            self.fields['api_key'].widget.attrs['placeholder'] = 'API key'
+
+    # def clean_parameters(self):
+    #     data = self.cleaned_data.get('parameters')
+    #     if isinstance(data, str):
+    #         try:
+    #             return json.loads(data)
+    #         except json.JSONDecodeError as e:
+    #             raise forms.ValidationError('Invalid JSON in parameters field') from e
+    #     return data
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+
+        if api_key := self.cleaned_data.get('api_key'):
+            instance.key = api_key
+
+        # if parameters := self.cleaned_data.get('parameters'):
+        #     instance.parameters = json.dumps(parameters, ensure_ascii=False)
+
+        if commit:
+            instance.save()
+
+        return instance
 
 
 class AddEditPromptForm(AddEditForm):

@@ -1,7 +1,10 @@
+import os
 from typing import Union
 
+from cryptography.fernet import Fernet
+from django.core.validators import URLValidator
 from django.db import models
-from django.db.models import QuerySet
+from django.db.models import JSONField, QuerySet
 
 
 class ItemMixin(models.Model):
@@ -71,9 +74,51 @@ class Dir(ItemMixin):
 class AIModel(ItemMixin):
     """A model that can be used to generate text."""
 
+    endpoint = models.URLField(
+        validators=[URLValidator()],
+        help_text='The URL endpoint for the AI',
+        blank=True,
+    )
+    encrypted_api_key = models.BinaryField(null=True, blank=True)
+    parameters = JSONField(
+        # default=dict,
+        blank=True,
+        help_text='Arbitrary key-value pairs for model parameters',
+    )
+
     class Meta:
         verbose_name = 'AI model'
         verbose_name_plural = 'AI models'
+
+    def __str__(self):
+        return f'{self.display}'
+
+    # def save(self, *args, **kwargs):
+    #     # if isinstance(self.parameters, str):
+    #     #     try:
+    #     #         self.parameters = json.loads(self.parameters)
+    #     #     except json.JSONDecodeError as e:
+    #     #         raise ValidationError('Invalid JSON in parameters field') from e
+
+    #     # if not self.parameters:
+    #     #     self.parameters = {'temperature': 0.0}
+
+    #     super().save(*args, **kwargs)
+
+    @property
+    def key(self) -> str:
+        if self.encrypted_api_key:
+            cipher_suite = Fernet(os.environ['ENCRYPTION_KEY'])
+            return cipher_suite.decrypt(self.encrypted_api_key).decode()
+        return ''
+
+    @key.setter
+    def key(self, value: str) -> None:
+        if value:
+            cipher_suite = Fernet(os.environ['ENCRYPTION_KEY'])
+            self.encrypted_api_key = cipher_suite.encrypt(value.encode())
+        else:
+            self.encrypted_api_key = None
 
 
 class Field(models.Model):

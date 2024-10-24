@@ -11,6 +11,12 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 
+import environ
+
+env = environ.Env()
+environ.Env.read_env()
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -32,6 +38,7 @@ INSTALLED_APPS = [
     'admin_interface',
     'colorfield',
     'mathfilters',
+    'django_json_widget',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

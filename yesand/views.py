@@ -1,3 +1,4 @@
+import logging
 from typing import Callable
 
 from django.forms import ModelForm
@@ -197,6 +198,15 @@ class ItemView(View):
             request, None, 'rename', {'item': item, 'error': 'Name cannot be empty'}
         )
 
+    def process_form(
+        self, request: HttpRequest, form: ModelForm, action: str
+    ) -> HttpResponse:
+        """Processes a form submission."""
+        if form.is_valid():
+            form.save()
+            return self.render_filesystem(request)
+        return self.render_form(request, form, action)
+
     def render_form(
         self,
         request: HttpRequest,
@@ -215,15 +225,6 @@ class ItemView(View):
         if extra_context:
             context.update(extra_context)
         return render(request, f'modal/{action}.html', context)
-
-    def process_form(
-        self, request: HttpRequest, form: ModelForm, action: str
-    ) -> HttpResponse:
-        """Processes a form submission."""
-        if form.is_valid():
-            form.save()
-            return self.render_filesystem(request)
-        return self.render_form(request, form, action)
 
     def render_filesystem(self, request: HttpRequest) -> HttpResponse:
         """Renders the filesystem structure."""
@@ -280,8 +281,8 @@ class EditMixin:
         item = get_object_or_404(
             self.model, id=request.GET.get(f'{self.model._meta.model_name}_id')
         )
-        form_class = AddEditForm.get_form_class(self.model)
-        form = form_class(instance=item)
+        EditForm = AddEditForm.get_form_class(self.model)
+        form = EditForm(instance=item)
         return render(
             request,
             f'{self.template_prefix}/edit.html',
@@ -331,6 +332,7 @@ class SaveMixin:
                 {self.model._meta.model_name: item},
             )
         else:
+            logging.error(f'Form errors: {form.errors}')
             return HttpResponseBadRequest('Invalid form data')
 
 

@@ -12,6 +12,9 @@ django-bootstrap5 = "^24.3"
 django-admin-interface = "^0.28.9"
 django-bootstrap-icons = "^0.9.0"
 django-mathfilters = "^1.0.0"
+django-environ = "^0.11.2"
+cryptography = "^43.0.3"
+django-json-widget = "^2.0.1"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.6.8"
@@ -86,6 +89,10 @@ args = [
   { name = "email", default = "admin@yesand.uk" },
 ]
 help = "Create a Django superuser"
+
+[tool.poe.tasks.collectstatic]
+cmd = "poetry run python manage.py collectstatic --noinput"
+help = "Collect static files"
 
 [tool.poe.tasks.reset]
 sequence = [

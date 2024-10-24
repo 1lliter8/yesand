@@ -12,9 +12,9 @@ yes& wants to be simple to deploy, simple to work with, and simple to query. It'
 
 ## To do
 
-- [ ] Editable prompt cards
-- [ ] Add AIModel to file tree
 - [ ] Add API to return prompts selected at any dir depth for max flexibility
+- [ ] Add API key object
+- [ ] Add user model and authentication
 
 ## Development
 

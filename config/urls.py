@@ -1,3 +1,5 @@
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path
 
@@ -10,3 +12,6 @@ urlpatterns = [
     path('prompt/', views.PromptView.as_view(), name='prompt'),
     path('aimodel/', views.AIView.as_view(), name='aimodel'),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
