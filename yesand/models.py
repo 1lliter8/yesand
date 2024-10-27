@@ -1,23 +1,17 @@
 import os
-from typing import Union
+from typing import List, Union
 
 from cryptography.fernet import Fernet
 from django.core.validators import URLValidator
 from django.db import models
 from django.db.models import JSONField, QuerySet
+from treebeard.mp_tree import MP_Node
 
 
 class ItemMixin(models.Model):
     """A mixin for items that can be used with ItemView."""
 
     display = models.CharField(max_length=255)
-    dir = models.ForeignKey(
-        'Dir',
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        related_name='%(class)ss',
-    )
 
     class Meta:
         abstract = True
@@ -26,47 +20,35 @@ class ItemMixin(models.Model):
         return self.display
 
 
-class Dir(ItemMixin):
-    """A directory in the file tree structure."""
-
-    dir = models.ForeignKey(
-        'self', on_delete=models.CASCADE, null=True, blank=True, related_name='children'
-    )
+class DirNode(MP_Node, ItemMixin):
+    """A directory in the file tree structure using treebeard."""
 
     class Meta:
         verbose_name = 'directory'
         verbose_name_plural = 'directories'
 
-    def __str__(self):
-        return self.display
+    def get_descendants_by_type(
+        self, model_class: type
+    ) -> List[Union['AIModel', 'Prompt']]:
+        """Get all descendants of a specific type."""
+        return model_class.objects.filter(dirnode=self)
 
-    def get_ancestors(self) -> list['Dir']:
-        """Return a list of all ancestors of this Dir."""
-        ancestors = []
-        current_dir = self.dir
-
-        while current_dir:
-            ancestors.insert(0, current_dir)
-            current_dir = current_dir.dir
-
-        return ancestors
-
-    def get_descendants(
+    def get_all_descendants(
         self, include_self: bool = False
-    ) -> list[Union['Dir', 'AIModel', 'Prompt']]:
-        """Return a list of all descendants of this Dir."""
+    ) -> List[Union['DirNode', 'AIModel', 'Prompt']]:
+        """Return a list of all descendants of this DirNode."""
         if include_self:
             descendants = [self]
         else:
             descendants = []
 
-        descendants.extend(AIModel.objects.filter(dir=self))
-        descendants.extend(Prompt.objects.filter(dir=self))
+        # Get model instances associated with this node
+        descendants.extend(AIModel.objects.filter(dirnode=self))
+        descendants.extend(Prompt.objects.filter(dirnode=self))
 
-        children = Dir.objects.filter(dir=self)
-
-        for child in children:
-            descendants.extend(child.get_descendants(include_self=True))
+        # Get child directories and their descendants
+        for child in self.get_children():
+            descendants.extend(child.get_all_descendants(include_self=True))
 
         return descendants
 
@@ -74,6 +56,13 @@ class Dir(ItemMixin):
 class AIModel(ItemMixin):
     """A model that can be used to generate text."""
 
+    dirnode = models.ForeignKey(
+        DirNode,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='aimodels',
+    )
     endpoint = models.URLField(
         validators=[URLValidator()],
         help_text='The URL endpoint for the AI',
@@ -81,7 +70,7 @@ class AIModel(ItemMixin):
     )
     encrypted_api_key = models.BinaryField(null=True, blank=True)
     parameters = JSONField(
-        # default=dict,
+        null=True,
         blank=True,
         help_text='Arbitrary key-value pairs for model parameters',
     )
@@ -89,21 +78,6 @@ class AIModel(ItemMixin):
     class Meta:
         verbose_name = 'AI model'
         verbose_name_plural = 'AI models'
-
-    def __str__(self):
-        return f'{self.display}'
-
-    # def save(self, *args, **kwargs):
-    #     # if isinstance(self.parameters, str):
-    #     #     try:
-    #     #         self.parameters = json.loads(self.parameters)
-    #     #     except json.JSONDecodeError as e:
-    #     #         raise ValidationError('Invalid JSON in parameters field') from e
-
-    #     # if not self.parameters:
-    #     #     self.parameters = {'temperature': 0.0}
-
-    #     super().save(*args, **kwargs)
 
     @property
     def key(self) -> str:
@@ -133,6 +107,9 @@ class Field(models.Model):
 class Prompt(ItemMixin):
     """A prompt for a text generation model."""
 
+    dirnode = models.ForeignKey(
+        DirNode, on_delete=models.CASCADE, null=True, blank=True, related_name='prompts'
+    )
     text = models.TextField(blank=True)
     aimodels = models.ManyToManyField(AIModel, blank=True, related_name='prompts')
     fields = models.ManyToManyField(Field, blank=True, related_name='prompts')
@@ -151,22 +128,23 @@ class Prompt(ItemMixin):
 
     def get_ancestor_aimodels(self) -> QuerySet[AIModel]:
         """Returns all AIModels in the ancestor directories."""
-        return self.get_ancestor_aimodels_for_dir(self.dir_id)
+        return self.get_ancestor_aimodels_for_dirnode(self.dirnode_id)
 
     @staticmethod
-    def get_ancestor_aimodels_for_dir(dir_id: int | None) -> QuerySet[AIModel]:
+    def get_ancestor_aimodels_for_dirnode(dirnode_id: int | None) -> QuerySet[AIModel]:
         """Returns all AIModels in the requested directory's ancestors.
 
-        If dir_id is None, it returns all AIModels that don't have a directory.
+        If dirnode_id is None, it returns all AIModels that don't have a directory.
         """
-        if dir_id is None:
-            return AIModel.objects.filter(dir__isnull=True)
+        if dirnode_id is None:
+            return AIModel.objects.filter(dirnode__isnull=True)
 
-        dir_instance = Dir.objects.get(id=dir_id)
-        ancestors = dir_instance.get_ancestors()
-        ancestors.append(dir_instance)
+        dirnode = DirNode.objects.get(id=dirnode_id)
+        ancestors = dirnode.get_ancestors()
+        ancestors = list(ancestors)
+        ancestors.append(dirnode)
 
-        return AIModel.objects.filter(dir__in=ancestors)
+        return AIModel.objects.filter(dirnode__in=ancestors)
 
     def _update_aimodels(self) -> None:
         """Update AIModels so only those in the ancestor directories are included."""
@@ -174,5 +152,4 @@ class Prompt(ItemMixin):
             self.get_ancestor_aimodels().values_list('id', flat=True)
         )
         aimodels_to_remove = self.aimodels.exclude(id__in=valid_aimodel_ids)
-
         self.aimodels.remove(*aimodels_to_remove)

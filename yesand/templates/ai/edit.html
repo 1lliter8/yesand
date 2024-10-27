@@ -11,30 +11,7 @@
             <input type="hidden" name="action" value="save">
             <input type="hidden" name="aimodel_id" value="{{ aimodel.id }}">
             <!-- Breadcrumb trail -->
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb d-flex align-items-center">
-                    {% with dirs=aimodel.dir.get_ancestors|default_if_none:"" %}
-                        <li class="breadcrumb-item d-flex align-items-center">{% bs_icon 'folder' %}</li>
-                        {% for dir in dirs %}
-                            <li class="breadcrumb-item d-flex align-items-center">
-                                <a href="#"
-                                   hx-get="{% url 'dir' %}?action=view&id={{ dir.id }}"
-                                   hx-target="#main-project-content"
-                                   hx-push-url="true"
-                                   hx-confirm="Are you sure you want to cancel editing?">{{ dir.display }}</a>
-                            </li>
-                        {% endfor %}
-                        <li class="breadcrumb-item d-flex align-items-center">
-                            <a href="#"
-                               hx-get="{% url 'dir' %}?action=view&id={{ aimodel.dir.id }}"
-                               hx-target="#main-project-content"
-                               hx-push-url="true"
-                               hx-confirm="Are you sure you want to cancel editing?"
-                               aria-current="page">{{ aimodel.dir.display }}</a>
-                        </li>
-                    {% endwith %}
-                </ol>
-            </nav>
+            {% include 'breadcrumb.html' with item=aimodel %}
             <!-- Editable AIModel display name -->
             <div class="row mb-3 align-items-center">
                 <div class="col-auto pe-2 d-flex align-items-center">{% bs_icon 'robot' %}</div>

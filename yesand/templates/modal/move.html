@@ -11,7 +11,7 @@
         <select name="new_dir" id="new_dir" class="form-select" required>
             <option value="">Select a directory</option>
             <option value="None">Move to root</option>
-            {% for dir in dirs %}<option value="{{ dir.id }}">{{ dir.display }}</option>{% endfor %}
+            {% for dirnode in dirs %}<option value="{{ dirnode.id }}">{{ dirnode.display }}</option>{% endfor %}
         </select>
     </div>
 {% endblock %}

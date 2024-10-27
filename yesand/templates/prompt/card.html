@@ -1,64 +1,45 @@
 {% load bootstrap_icons %}
-<div class="card mb-3" id="prompt-card-{{ prompt.id }}">
+
+<div id="prompt-card-{{ prompt.id }}" class="card mb-3">
     <div class="card-body">
-        <!-- Breadcrumb trail -->
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb d-flex align-items-center">
-                {% with dirs=prompt.dir.get_ancestors|default_if_none:"" %}
-                    <li class="breadcrumb-item d-flex align-items-center">{% bs_icon 'folder' %}</li>
-                    {% for dir in dirs %}
-                        <li class="breadcrumb-item d-flex align-items-center">
-                            <a href="#"
-                               hx-get="{% url 'dir' %}?action=view&id={{ dir.id }}"
-                               hx-target="#main-project-content"
-                               hx-push-url="true">{{ dir.display }}</a>
-                        </li>
-                    {% endfor %}
-                    <li class="breadcrumb-item d-flex align-items-center">
-                        <a href="#"
-                           hx-get="{% url 'dir' %}?action=view&id={{ prompt.dir.id }}"
-                           hx-target="#main-project-content"
-                           hx-push-url="true"
-                           aria-current="page">{{ prompt.dir.display }}</a>
-                    </li>
-                {% endwith %}
-            </ol>
-        </nav>
-        <!-- Prompt name -->
         <div class="row mb-3 align-items-center">
-            <div class="col-auto pe-2 d-flex align-items-center">{% bs_icon 'chat' %}</div>
+            <div class="col-auto pe-2 d-flex align-items-center">
+                {% bs_icon 'chat' %}
+            </div>
             <div class="col ps-0">
-                <h5 class="card-title mb-0" id="prompt-title-{{ prompt.id }}">{{ prompt.display }}</h5>
+                <h5 id="prompt-title-{{ prompt.id }}" class="card-title mb-0">{{ prompt.display }}</h5>
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-outline-primary btn-sm update-breadcrumb"
+                hx-get="{% url 'get_content' 'prompt' prompt.id %}"
+                hx-target="#content"
+                hx-push-url="true"
+                data-node-type="prompt"
+                data-node-id="{{ prompt.id }}">
+            {% bs_icon 'pencil' extra_classes="me-2" %} Edit
+        </button>
             </div>
         </div>
-        <!-- Prompt text -->
+
         <div class="row mb-3">
-            <div class="col-auto pe-2 d-flex align-items-top mt-1">{% bs_icon 'chat-quote' %}</div>
+            <div class="col-auto pe-2 d-flex align-items-top mt-1">
+                {% bs_icon 'chat-quote' %}
+            </div>
             <div class="col ps-0">
-                <p class="card-text mb-0" id="prompt-text-{{ prompt.id }}">{{ prompt.text }}</p>
+                <div class="card-text">{{ prompt.text }}</div>
             </div>
         </div>
-        <!-- AIModels as badges -->
+
         <div class="row mb-3 align-items-center">
-            <div class="col-auto pe-2 d-flex align-items-center">{% bs_icon 'robot' %}</div>
+            <div class="col-auto pe-2 d-flex align-items-center">
+                {% bs_icon 'robot' %}
+            </div>
             <div class="col ps-0">
                 <div id="prompt-aimodels-{{ prompt.id }}">
                     {% for aimodel in prompt.aimodels.all %}
                         <span class="badge rounded-pill bg-secondary">{{ aimodel.display }}</span>
                     {% endfor %}
                 </div>
-            </div>
-        </div>
-        <!-- Edit button -->
-        <div class="row mt-3">
-            <div class="col">
-                <button class="btn btn-primary d-flex align-items-center"
-                        hx-get="{% url 'prompt' %}?action=edit&prompt_id={{ prompt.id }}"
-                        hx-target="#prompt-card-{{ prompt.id }}"
-                        hx-swap="outerHTML">
-                    {% bs_icon 'pencil' extra_classes="me-2" %}
-                    Edit
-                </button>
             </div>
         </div>
     </div>

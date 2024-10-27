@@ -8,30 +8,7 @@
             <input type="hidden" name="action" value="save">
             <input type="hidden" name="prompt_id" value="{{ prompt.id }}">
             <!-- Breadcrumb trail -->
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb d-flex align-items-center">
-                    {% with dirs=prompt.dir.get_ancestors|default_if_none:"" %}
-                        <li class="breadcrumb-item d-flex align-items-center">{% bs_icon 'folder' %}</li>
-                        {% for dir in dirs %}
-                            <li class="breadcrumb-item d-flex align-items-center">
-                                <a href="#"
-                                   hx-get="{% url 'dir' %}?action=view&id={{ dir.id }}"
-                                   hx-target="#main-project-content"
-                                   hx-push-url="true"
-                                   hx-confirm="Are you sure you want to cancel editing?">{{ dir.display }}</a>
-                            </li>
-                        {% endfor %}
-                        <li class="breadcrumb-item d-flex align-items-center">
-                            <a href="#"
-                               hx-get="{% url 'dir' %}?action=view&id={{ prompt.dir.id }}"
-                               hx-target="#main-project-content"
-                               hx-push-url="true"
-                               hx-confirm="Are you sure you want to cancel editing?"
-                               aria-current="page">{{ prompt.dir.display }}</a>
-                        </li>
-                    {% endwith %}
-                </ol>
-            </nav>
+            {% include 'breadcrumb.html' with item=prompt %}
             <!-- Editable prompt display name -->
             <div class="row mb-3 align-items-center">
                 <div class="col-auto pe-2 d-flex align-items-center">{% bs_icon 'chat' %}</div>

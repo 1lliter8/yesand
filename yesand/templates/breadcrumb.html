@@ -1,0 +1,20 @@
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{% url 'projects' %}">Home</a>
+        </li>
+        {% for ancestor in ancestors %}
+        <li class="breadcrumb-item">
+            <a href="#"
+               hx-get="{% url 'get_content' 'dirnode' ancestor.id %}"
+               hx-target="#content"
+               hx-trigger="click"
+               hx-push-url="true"
+               onclick="updateBreadcrumb('dirnode', {{ ancestor.id }})">
+                {{ ancestor.display }}
+            </a>
+        </li>
+        {% endfor %}
+        <li class="breadcrumb-item active">{{ current_node.display }}</li>
+    </ol>
+</nav>

@@ -7,6 +7,9 @@ db.sqlite3
 media
 staticfiles
 
+# Ruff
+.ruff_cache
+
 # Backup files # 
 *.bak 
 

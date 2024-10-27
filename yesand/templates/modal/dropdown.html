@@ -1,9 +1,9 @@
 {% load bootstrap_icons %}
-{% if item.type == 'dir' %}
+{% if item.type == 'dirnode' %}
     <li>
         <a class="dropdown-item"
            href="#"
-           hx-get="{% url 'dir' %}?action=add&dir_id={{ item.id }}"
+           hx-get="{% url 'dirnode' %}?action=add&dir_id={{ item.id }}"
            hx-target="#modal-content"
            data-bs-toggle="modal"
            data-bs-target="#itemModal">{% bs_icon 'plus' extra_classes='me-2' %} Add new child directory</a>
