@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'colorfield',
     'mathfilters',
     'treebeard',
+    'graphene_django',
     'django_json_widget',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -156,3 +157,7 @@ BOOTSTRAP5 = {
 X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 SILENCED_SYSTEM_CHECKS = ['security.W019']
+
+# GraphQL settings
+
+GRAPHENE = {'SCHEMA': 'api.schema.schema'}
