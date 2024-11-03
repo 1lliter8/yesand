@@ -12,6 +12,7 @@ class ItemMixin(models.Model):
     """A mixin for items that can be used with ItemView."""
 
     display = models.CharField(max_length=255)
+    type_order = models.IntegerField(editable=False)
 
     class Meta:
         abstract = True
@@ -22,6 +23,10 @@ class ItemMixin(models.Model):
 
 class DirNode(MP_Node, ItemMixin):
     """A directory in the file tree structure using treebeard."""
+
+    node_order_by = ['type_order', 'display']
+
+    type_order = models.IntegerField(default=1, editable=False)
 
     class Meta:
         verbose_name = 'directory'
@@ -56,11 +61,10 @@ class DirNode(MP_Node, ItemMixin):
 class AIModel(ItemMixin):
     """A model that can be used to generate text."""
 
+    type_order = models.IntegerField(default=2, editable=False)
     dirnode = models.ForeignKey(
         DirNode,
         on_delete=models.CASCADE,
-        null=True,
-        blank=True,
         related_name='aimodels',
     )
     endpoint = models.URLField(
@@ -107,8 +111,9 @@ class Field(models.Model):
 class Prompt(ItemMixin):
     """A prompt for a text generation model."""
 
+    type_order = models.IntegerField(default=3, editable=False)
     dirnode = models.ForeignKey(
-        DirNode, on_delete=models.CASCADE, null=True, blank=True, related_name='prompts'
+        DirNode, on_delete=models.CASCADE, related_name='prompts'
     )
     text = models.TextField(blank=True)
     aimodels = models.ManyToManyField(AIModel, blank=True, related_name='prompts')
@@ -132,13 +137,7 @@ class Prompt(ItemMixin):
 
     @staticmethod
     def get_ancestor_aimodels_for_dirnode(dirnode_id: int | None) -> QuerySet[AIModel]:
-        """Returns all AIModels in the requested directory's ancestors.
-
-        If dirnode_id is None, it returns all AIModels that don't have a directory.
-        """
-        if dirnode_id is None:
-            return AIModel.objects.filter(dirnode__isnull=True)
-
+        """Returns all AIModels in the requested directory's ancestors."""
         dirnode = DirNode.objects.get(id=dirnode_id)
         ancestors = dirnode.get_ancestors()
         ancestors = list(ancestors)

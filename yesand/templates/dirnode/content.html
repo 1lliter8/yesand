@@ -10,8 +10,6 @@
         {% endfor %}
     {% endif %}
     {% if not aimodels and not prompts %}
-        <div class="alert alert-info">
-            No AI models or prompts found in this directory or its subdirectories.
-        </div>
+        <p>No AI models or prompts found in this directory or its subdirectories.</p>
     {% endif %}
 </div>

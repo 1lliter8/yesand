@@ -1,39 +1,26 @@
 {% load bootstrap_icons %}
-
 <div id="aimodel-card-{{ aimodel.id }}" class="card mb-3">
     <div class="card-body">
         <div class="row mb-3 align-items-center">
-            <div class="col-auto pe-2 d-flex align-items-center">
-                {% bs_icon 'robot' %}
-            </div>
+            <div class="col-auto pe-2 d-flex align-items-center">{% bs_icon 'robot' %}</div>
             <div class="col ps-0">
                 <h5 id="aimodel-title-{{ aimodel.id }}" class="card-title mb-0">{{ aimodel.display }}</h5>
             </div>
             <div class="col-auto">
                 <button class="btn btn-outline-primary btn-sm update-breadcrumb"
-                hx-get="{% url 'get_content' 'aimodel' aimodel.id %}"
-                hx-target="#content"
-                hx-push-url="true"
-                data-node-type="aimodel"
-                data-node-id="{{ aimodel.id }}">
-            {% bs_icon 'pencil' extra_classes="me-2" %} Edit
-        </button>
+                        hx-get="{% url 'get_content' 'aimodel' aimodel.id %}"
+                        hx-target="#content"
+                        hx-push-url="true"
+                        data-node-type="aimodel"
+                        data-node-id="{{ aimodel.id }}">{% bs_icon 'pencil' extra_classes="me-2" %} Edit</button>
             </div>
         </div>
-
         <div class="row mb-3 align-items-center">
-            <div class="col-auto pe-2 d-flex align-items-center">
-                {% bs_icon 'link' %}
-            </div>
-            <div class="col ps-0">
-                {{ aimodel.endpoint|default:"Not set" }}
-            </div>
+            <div class="col-auto pe-2 d-flex align-items-center">{% bs_icon 'link' %}</div>
+            <div class="col ps-0">{{ aimodel.endpoint|default:"Not set" }}</div>
         </div>
-
         <div class="row mb-3 align-items-center">
-            <div class="col-auto pe-2 d-flex align-items-center">
-                {% bs_icon 'key' %}
-            </div>
+            <div class="col-auto pe-2 d-flex align-items-center">{% bs_icon 'key' %}</div>
             <div class="col ps-0">
                 {% if aimodel.key %}
                     {{ aimodel.key|slice:":5" }}*****
@@ -42,13 +29,11 @@
                 {% endif %}
             </div>
         </div>
-
         <div class="row mb-3">
-            <div class="col-auto pe-2 d-flex align-items-top mt-1">
-                {% bs_icon 'gear' %}
-            </div>
+            <div class="col-auto pe-2 d-flex align-items-top mt-1">{% bs_icon 'gear' %}</div>
             <div class="col ps-0">
-                <pre id="aimodel-parameters-{{ aimodel.id }}" class="card-text mb-0 bg-light p-2 rounded">{{ aimodel.parameters }}</pre>
+                <pre id="aimodel-parameters-{{ aimodel.id }}"
+                     class="card-text mb-0 bg-light p-2 rounded">{{ aimodel.parameters }}</pre>
             </div>
         </div>
     </div>

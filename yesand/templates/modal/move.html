@@ -1,18 +1,15 @@
 {% extends "modal/base.html" %}
-{% block modal_title %}Move {{ item_verbose_name }}{% endblock %}
-{% block form_url %}
-    {% url view_name %}
-{% endblock %}
-{% block action %}move{% endblock %}
-{% block hidden_inputs %}<input type="hidden" name="{{ item_type }}_id" value="{{ item.id }}">{% endblock %}
-{% block modal_body %}
+{% block modal_content %}
     <div class="mb-3">
-        <label for="new_dir" class="form-label">New directory</label>
-        <select name="new_dir" id="new_dir" class="form-select" required>
-            <option value="">Select a directory</option>
-            <option value="None">Move to root</option>
-            {% for dirnode in dirs %}<option value="{{ dirnode.id }}">{{ dirnode.display }}</option>{% endfor %}
-        </select>
+        <label class="form-label">Select destination directory</label>
+        {{ form.target_id }}
     </div>
 {% endblock %}
-{% block submit_button_text %}Move {{ item_verbose_name }}{% endblock %}
+{% block modal_footer %}
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+    <button type="submit"
+            class="btn btn-primary"
+            hx-post="{{ request.path }}"
+            data-bs-dismiss="modal"
+            hx-swap="innerHTML">Move Here</button>
+{% endblock %}

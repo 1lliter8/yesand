@@ -21,6 +21,16 @@ urlpatterns = [
         views.TreeView.get_content,
         name='get_content',
     ),
+    path(
+        'modal/<str:node_type>/<str:action>/',
+        views.ModalView.handle_modal,
+        name='modal_no_node',
+    ),
+    path(
+        'modal/<str:node_type>/<str:action>/<int:node_id>/',
+        views.ModalView.handle_modal,
+        name='modal_with_node',
+    ),
     # path('dirnode/', views.DirView.as_view(), name='dirnode'),
     # path('prompt/', views.PromptView.as_view(), name='prompt'),
     # path('aimodel/', views.AIView.as_view(), name='aimodel'),

@@ -2,34 +2,34 @@
 {% load django_bootstrap5 %}
 {% load bootstrap_icons %}
 {% block bootstrap5_content %}
-<div class="container-fluid">
-    <div class="row mt-3">
-        <!-- Filesystem sidebar -->
-        <div id="filesystem" class="col-md-3 col-lg-2 position-sticky" 
-             hx-get="{% url 'get_filesystem' %}" 
-             hx-trigger="load, filesystemChanged from:body">
+    <div id="projects" class="container-fluid">
+        <div class="row mt-3">
+            <!-- Filesystem sidebar -->
+            <div id="filesystem"
+                 class="col-md-3 col-lg-2 position-sticky z-3"
+                 hx-get="{% url 'get_filesystem' %}"
+                 hx-trigger="load, filesystemChanged from:body"></div>
+            <!-- Main content -->
+            <main class="col-md-9 col-lg-10 ms-sm-auto px-md-4 z-0">
+                <!-- Breadcrumb navigation -->
+                <div id="breadcrumb">
+                    <!-- Initial breadcrumb -->
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item active">
+                                <a href="{% url 'projects' %}">{% bs_icon 'folder' %}</a>
+                            </li>
+                        </ol>
+                    </nav>
+                </div>
+                <!-- Content area -->
+                <div id="content">
+                    <!-- Initial welcome content -->
+                    {% include "welcome.html" %}
+                </div>
+            </main>
         </div>
-        
-        <!-- Main content -->
-        <main class="col-md-9 col-lg-10 ms-sm-auto px-md-4">
-            <!-- Breadcrumb navigation -->
-            <div id="breadcrumb">
-                <!-- Initial breadcrumb -->
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item active">Home</li>
-                    </ol>
-                </nav>
-            </div>
-            
-            <!-- Content area -->
-            <div id="content">
-                <!-- Initial welcome content -->
-                {% include "welcome.html" %}
-            </div>
-        </main>
     </div>
-</div>
     <!-- Modal container -->
     <div class="modal fade"
          id="itemModal"
@@ -46,8 +46,8 @@
     </div>
 {% endblock %}
 {% block extra_js %}
-<!-- Filesystem and breadcrumb trail -->
-<script>
+    <!-- Filesystem and breadcrumb trail -->
+    <script>
     function updateBreadcrumb(nodeType, nodeId) {
         const breadcrumbUrl = `{% url 'get_breadcrumb' node_type='placeholder_type' node_id=0 %}`.replace('placeholder_type', nodeType).replace('0', nodeId);
         htmx.ajax('GET', breadcrumbUrl, {target: '#breadcrumb'});
