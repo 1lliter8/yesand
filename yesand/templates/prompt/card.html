@@ -7,12 +7,9 @@
                 <h5 id="prompt-title-{{ prompt.id }}" class="card-title mb-0">{{ prompt.display }}</h5>
             </div>
             <div class="col-auto">
-                <button class="btn btn-outline-primary btn-sm update-breadcrumb"
-                        hx-get="{% url 'get_content' 'prompt' prompt.id %}"
-                        hx-target="#content"
-                        hx-push-url="true"
-                        data-node-type="prompt"
-                        data-node-id="{{ prompt.id }}">{% bs_icon 'pencil' extra_classes="me-2" %} Edit</button>
+                <button class="btn btn-sm btn-outline-primary d-flex align-items-center"
+                        hx-get="{% url 'edit_node' node_type='prompt' node_id=prompt.id %}"
+                        hx-target="#prompt-card-{{ prompt.id }}">{% bs_icon 'pencil' %}</button>
             </div>
         </div>
         <div class="row mb-3">

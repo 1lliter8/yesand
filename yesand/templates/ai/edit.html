@@ -4,13 +4,10 @@
 {% endblock extra_head %}
 <div class="card mb-3" id="aimodel-card-{{ aimodel.id }}">
     <div class="card-body">
-        <form hx-post="{% url 'aimodel' %}"
+        <form hx-post="{% url 'edit_node' node_type='aimodel' node_id=aimodel.id %}"
               hx-target="#aimodel-card-{{ aimodel.id }}"
               hx-swap="outerHTML">
             {% csrf_token %}
-            <input type="hidden" name="action" value="save">
-            <input type="hidden" name="aimodel_id" value="{{ aimodel.id }}">
-            <!-- Breadcrumb trail -->
             {% include 'breadcrumb.html' with item=aimodel %}
             <!-- Editable AIModel display name -->
             <div class="row mb-3 align-items-center">
@@ -42,7 +39,7 @@
                         </button>
                         <button type="button"
                                 class="btn btn-secondary d-flex align-items-center"
-                                hx-get="{% url 'aimodel' %}?action=view&id={{ aimodel.id }}"
+                                hx-get="{% url 'get_content' node_type='aimodel' node_id=aimodel.id %}"
                                 hx-target="#aimodel-card-{{ aimodel.id }}"
                                 hx-swap="outerHTML">
                             {% bs_icon 'x' extra_classes="me-2" %}

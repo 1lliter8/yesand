@@ -31,9 +31,11 @@ urlpatterns = [
         views.ModalView.handle_modal,
         name='modal_with_node',
     ),
-    # path('dirnode/', views.DirView.as_view(), name='dirnode'),
-    # path('prompt/', views.PromptView.as_view(), name='prompt'),
-    # path('aimodel/', views.AIView.as_view(), name='aimodel'),
+    path(
+        'edit/<str:node_type>/<int:node_id>/',
+        views.TreeView.edit_node,
+        name='edit_node',
+    ),
 ]
 
 if settings.DEBUG:

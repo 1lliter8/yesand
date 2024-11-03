@@ -1,47 +1,26 @@
 {% load bootstrap_icons %}
 <div class="card mb-3" id="prompt-card-{{ prompt.id }}">
     <div class="card-body">
-        <form hx-post="{% url 'prompt' %}"
+        <form hx-post="{% url 'edit_node' node_type='prompt' node_id=prompt.id %}"
               hx-target="#prompt-card-{{ prompt.id }}"
               hx-swap="outerHTML">
             {% csrf_token %}
-            <input type="hidden" name="action" value="save">
-            <input type="hidden" name="prompt_id" value="{{ prompt.id }}">
-            <!-- Breadcrumb trail -->
             {% include 'breadcrumb.html' with item=prompt %}
             <!-- Editable prompt display name -->
             <div class="row mb-3 align-items-center">
                 <div class="col-auto pe-2 d-flex align-items-center">{% bs_icon 'chat' %}</div>
-                <div class="col ps-0">
-                    <input type="text"
-                           class="form-control"
-                           name="display"
-                           value="{{ prompt.display }}"
-                           required>
-                </div>
+                <div class="col ps-0">{{ form.display }}</div>
             </div>
             <!-- Editable prompt text -->
             <div class="row mb-3">
                 <div class="col-auto pe-2 d-flex align-items-top mt-1">{% bs_icon 'chat-quote' %}</div>
-                <div class="col ps-0">
-                    <textarea class="form-control auto-resize" name="text" rows="3" required>{{ prompt.text }}</textarea>
-                </div>
+                <div class="col ps-0">{{ form.text }}</div>
             </div>
             <!-- Editable AIModels -->
             <div class="row mb-3 align-items-center">
                 <div class="col-auto pe-2 d-flex align-items-center">{% bs_icon 'robot' %}</div>
                 <div class="col ps-0">
-                    {% for aimodel in form.aimodels.field.queryset %}
-                        <div class="form-check">
-                            <input class="form-check-input"
-                                   type="checkbox"
-                                   name="aimodels"
-                                   value="{{ aimodel.id }}"
-                                   id="aimodel-{{ aimodel.id }}"
-                                   {% if aimodel in prompt.aimodels.all %}checked{% endif %}>
-                            <label class="form-check-label" for="aimodel-{{ aimodel.id }}">{{ aimodel.display }}</label>
-                        </div>
-                    {% endfor %}
+                    {% for checkbox in form.aimodels %}<div class="form-check">{{ checkbox }}</div>{% endfor %}
                 </div>
             </div>
             <!-- Save and Cancel buttons -->
@@ -54,7 +33,7 @@
                         </button>
                         <button type="button"
                                 class="btn btn-secondary d-flex align-items-center"
-                                hx-get="{% url 'prompt' %}?action=view&id={{ prompt.id }}"
+                                hx-get="{% url 'get_content' node_type='prompt' node_id=prompt.id %}"
                                 hx-target="#prompt-card-{{ prompt.id }}"
                                 hx-swap="outerHTML">
                             {% bs_icon 'x' extra_classes="me-2" %}

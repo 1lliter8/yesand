@@ -7,12 +7,9 @@
                 <h5 id="aimodel-title-{{ aimodel.id }}" class="card-title mb-0">{{ aimodel.display }}</h5>
             </div>
             <div class="col-auto">
-                <button class="btn btn-outline-primary btn-sm update-breadcrumb"
-                        hx-get="{% url 'get_content' 'aimodel' aimodel.id %}"
-                        hx-target="#content"
-                        hx-push-url="true"
-                        data-node-type="aimodel"
-                        data-node-id="{{ aimodel.id }}">{% bs_icon 'pencil' extra_classes="me-2" %} Edit</button>
+                <button class="btn btn-sm btn-outline-primary d-flex align-items-center"
+                        hx-get="{% url 'edit_node' node_type='aimodel' node_id=aimodel.id %}"
+                        hx-target="#aimodel-card-{{ aimodel.id }}">{% bs_icon 'pencil' %}</button>
             </div>
         </div>
         <div class="row mb-3 align-items-center">

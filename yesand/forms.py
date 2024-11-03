@@ -120,6 +120,73 @@ class RenameDirNodeForm(DisplayNameForm):
         fields = ['display']
 
 
+class EditFormMixin:
+    """Mixin for edit forms to share common functionality."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            if not isinstance(field.widget, JSONEditorWidget):
+                field.widget.attrs.update({'class': 'form-control'})
+
+
+class EditAIModelForm(EditFormMixin, forms.ModelForm):
+    """Form for editing AI Models."""
+
+    api_key = forms.CharField(
+        required=False,
+        widget=forms.PasswordInput(attrs={'placeholder': 'Enter API key'}),
+    )
+
+    class Meta:
+        model = AIModel
+        fields = ['display', 'endpoint', 'parameters']
+        widgets = {
+            'display': forms.TextInput(attrs={'placeholder': 'Enter display name'}),
+            'endpoint': forms.URLInput(attrs={'placeholder': 'Enter endpoint URL'}),
+            'parameters': JSONEditorWidget,
+        }
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if api_key := self.cleaned_data.get('api_key'):
+            instance.key = api_key
+        if commit:
+            instance.save()
+        return instance
+
+
+class EditPromptForm(EditFormMixin, forms.ModelForm):
+    """Form for editing Prompts."""
+
+    class Meta:
+        model = Prompt
+        fields = ['display', 'text', 'aimodels']
+        widgets = {
+            'display': forms.TextInput(attrs={'placeholder': 'Enter display name'}),
+            'text': forms.Textarea(
+                attrs={
+                    'rows': '3',
+                    'placeholder': 'Enter prompt text',
+                    'class': 'auto-resize',
+                }
+            ),
+            'aimodels': forms.CheckboxSelectMultiple(
+                attrs={'class': 'form-check-input'}
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:
+            # Only show AI models from ancestor directories
+            self.fields['aimodels'].queryset = self.instance.get_ancestor_aimodels()
+
+        # Add Bootstrap form-check class to each checkbox label
+        self.fields['aimodels'].widget.attrs['class'] = 'form-check-input'
+        self.fields['aimodels'].label_attrs = {'class': 'form-check-label'}
+
+
 class MoveForm(TargetNodeForm):
     """Form for move operations."""
 

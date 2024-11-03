@@ -1,6 +1,7 @@
 import logging
 from collections import namedtuple
 
+from django.http import Http404
 from django.shortcuts import get_object_or_404, render
 from django.views.generic import TemplateView
 
@@ -10,6 +11,8 @@ from .forms import (
     AddPromptForm,
     CopyForm,
     DeleteForm,
+    EditAIModelForm,
+    EditPromptForm,
     MoveForm,
     RenameAIModelForm,
     RenameDirNodeForm,
@@ -83,6 +86,33 @@ class TreeView:
             node = get_object_or_404(model, id=node_id)
             template = f"{'ai' if node_type == 'aimodel' else 'prompt'}/card.html"
             return render(request, template, {node_type: node})
+
+    @staticmethod
+    def edit_node(request, node_type, node_id):
+        """Handle both GET (show form) and POST (save changes) for editing."""
+        if node_type == 'aimodel':
+            model = AIModel
+            form_class = EditAIModelForm
+            template = 'ai/edit.html'
+        elif node_type == 'prompt':
+            model = Prompt
+            form_class = EditPromptForm
+            template = 'prompt/edit.html'
+        else:
+            raise Http404('Node type not supported for editing')
+
+        node = get_object_or_404(model, id=node_id)
+
+        if request.method == 'POST':
+            form = form_class(request.POST, instance=node)
+            if form.is_valid():
+                form.save()
+                template = f"{template.split('/')[0]}/card.html"
+                return render(request, template, {node_type: node})
+        else:
+            form = form_class(instance=node)
+
+        return render(request, template, {'form': form, node_type: node})
 
 
 class ModalView:
