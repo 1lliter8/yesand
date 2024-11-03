@@ -16,9 +16,16 @@ class ItemMixin(models.Model):
 
     class Meta:
         abstract = True
+        ordering = ['type_order', 'display']
 
     def __str__(self):
         return self.display
+
+    def save(self, *args, **kwargs):
+        """Ensure proper ordering after save."""
+        super().save(*args, **kwargs)
+        if hasattr(self, 'dirnode'):
+            self.dirnode.fix_tree()
 
 
 class DirNode(MP_Node, ItemMixin):
@@ -31,12 +38,20 @@ class DirNode(MP_Node, ItemMixin):
     class Meta:
         verbose_name = 'directory'
         verbose_name_plural = 'directories'
+        ordering = ['type_order', 'display']
+
+    def save(self, *args, **kwargs):
+        """Ensure tree is fixed after save."""
+        super().save(*args, **kwargs)
+        self.fix_tree()
 
     def get_descendants_by_type(
         self, model_class: type
     ) -> List[Union['AIModel', 'Prompt']]:
         """Get all descendants of a specific type."""
-        return model_class.objects.filter(dirnode=self)
+        return model_class.objects.filter(dirnode=self).order_by(
+            'type_order', 'display'
+        )
 
     def get_all_descendants(
         self, include_self: bool = False
@@ -48,11 +63,15 @@ class DirNode(MP_Node, ItemMixin):
             descendants = []
 
         # Get model instances associated with this node
-        descendants.extend(AIModel.objects.filter(dirnode=self))
-        descendants.extend(Prompt.objects.filter(dirnode=self))
+        descendants.extend(
+            AIModel.objects.filter(dirnode=self).order_by('type_order', 'display')
+        )
+        descendants.extend(
+            Prompt.objects.filter(dirnode=self).order_by('type_order', 'display')
+        )
 
         # Get child directories and their descendants
-        for child in self.get_children():
+        for child in self.get_children().order_by('type_order', 'display'):
             descendants.extend(child.get_all_descendants(include_self=True))
 
         return descendants
@@ -82,6 +101,7 @@ class AIModel(ItemMixin):
     class Meta:
         verbose_name = 'AI model'
         verbose_name_plural = 'AI models'
+        ordering = ['type_order', 'display']
 
     @property
     def key(self) -> str:
@@ -122,6 +142,7 @@ class Prompt(ItemMixin):
     class Meta:
         verbose_name = 'prompt'
         verbose_name_plural = 'prompts'
+        ordering = ['type_order', 'display']
 
     def __str__(self) -> str:
         return f'{self.display}: {self.text[:50]}...'
@@ -143,7 +164,9 @@ class Prompt(ItemMixin):
         ancestors = list(ancestors)
         ancestors.append(dirnode)
 
-        return AIModel.objects.filter(dirnode__in=ancestors)
+        return AIModel.objects.filter(dirnode__in=ancestors).order_by(
+            'type_order', 'display'
+        )
 
     def _update_aimodels(self) -> None:
         """Update AIModels so only those in the ancestor directories are included."""
