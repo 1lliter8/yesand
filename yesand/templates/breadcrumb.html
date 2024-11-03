@@ -1,8 +1,8 @@
 {% load bootstrap_icons %}
 <nav aria-label="breadcrumb">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item">
-            <a href="{% url 'projects' %}">{% bs_icon 'folder' %}</a>
+    <ol class="breadcrumb d-flex align-items-center">
+        <li class="breadcrumb-item d-flex align-items-center">
+            <a href="{% url 'projects' %}" class="d-flex align-items-center">{% bs_icon 'folder' %}</a>
         </li>
         {% for ancestor in ancestors %}
             <li class="breadcrumb-item">
@@ -14,6 +14,6 @@
                    hx-on:click="updateBreadcrumb('dirnode', {{ ancestor.id }})">{{ ancestor.display }}</a>
             </li>
         {% endfor %}
-        <li class="breadcrumb-item active">{{ current_node.display }}</li>
+        <li class="breadcrumb-item active d-flex align-items-center">{{ current_node.display }}</li>
     </ol>
 </nav>
