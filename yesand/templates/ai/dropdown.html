@@ -1,0 +1,53 @@
+{% load bootstrap_icons %}
+<div class="dropdown">
+    <button class="btn btn-link btn-sm text-dark p-0"
+            type="button"
+            data-bs-toggle="dropdown"
+            aria-expanded="false">{% bs_icon 'chevron-down' %}</button>
+    <ul class="dropdown-menu">
+        <li>
+            <a class="dropdown-item"
+               href="#"
+               hx-get="{% url 'modal_with_node' node_type='aimodel' node_id=node_id action='rename' %}"
+               hx-target="#modal-content"
+               data-bs-toggle="modal"
+               data-bs-target="#itemModal">
+                {% bs_icon 'pencil' extra_classes='me-2' %}
+                Rename
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item"
+               href="#"
+               hx-get="{% url 'modal_with_node' node_type='aimodel' node_id=node_id action='move' %}"
+               hx-target="#modal-content"
+               data-bs-toggle="modal"
+               data-bs-target="#itemModal">
+                {% bs_icon 'arrows-move' extra_classes='me-2' %}
+                Move
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item"
+               href="#"
+               hx-get="{% url 'modal_with_node' node_type='aimodel' node_id=node_id action='copy' %}"
+               hx-target="#modal-content"
+               data-bs-toggle="modal"
+               data-bs-target="#itemModal">
+                {% bs_icon 'files' extra_classes='me-2' %}
+                Copy
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item text-danger"
+               href="#"
+               hx-get="{% url 'modal_with_node' node_type='aimodel' node_id=node_id action='delete' %}"
+               hx-target="#modal-content"
+               data-bs-toggle="modal"
+               data-bs-target="#itemModal">
+                {% bs_icon 'trash' extra_classes='me-2' %}
+                Delete
+            </a>
+        </li>
+    </ul>
+</div>

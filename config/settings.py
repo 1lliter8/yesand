@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'admin_interface',
     'colorfield',
     'mathfilters',
+    'treebeard',
     'django_json_widget',
     'django.contrib.admin',
     'django.contrib.auth',

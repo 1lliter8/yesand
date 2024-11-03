@@ -1,33 +1,24 @@
-{% load bootstrap_icons %}
 <div class="modal-header">
-    <h5 class="modal-title">
-        {% block modal_title %}{% endblock %}
-    </h5>
+    <h5 class="modal-title">{{ title }}</h5>
     <button type="button"
             class="btn-close"
             data-bs-dismiss="modal"
             aria-label="Close"></button>
 </div>
-<form hx-post="{% block form_url %}{% endblock %}"
-      hx-target="#filesystem"
-      hx-swap="outerHTML"
-      hx-trigger="submit"
-      hx-indicator="#modal-spinner">
+<form {% if node_id %} hx-post="{% url 'modal_with_node' node_type=node_type action=action node_id=node_id %}" {% else %} hx-post="{% url 'modal_no_node' node_type=node_type action=action %}" {% endif %}
+      hx-target="#content"
+      hx-swap="innerHTML"
+      hx-trigger="submit">
     {% csrf_token %}
-    <input type="hidden" name="action" value="{% block action %}{% endblock %}">
-    {% block hidden_inputs %}{% endblock %}
     <div class="modal-body">
-        {% block modal_body %}{% endblock %}
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+            </div>
+        {% endif %}
+        {% block modal_content %}{% endblock %}
     </div>
     <div class="modal-footer">
-        <span id="modal-spinner"
-              class="spinner-border spinner-border-sm htmx-indicator"
-              role="status"
-              aria-hidden="true"></span>
-        {% block footer_buttons %}
-            <button type="submit" class="btn btn-primary">
-                {% block submit_button_text %}Submit{% endblock %}
-            </button>
-        {% endblock %}
+        {% block modal_footer %}{% endblock %}
     </div>
 </form>

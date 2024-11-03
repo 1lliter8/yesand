@@ -1,0 +1,15 @@
+<div class="cards-container">
+    {% if aimodels %}
+        {% for aimodel in aimodels %}
+            {% include "ai/card.html" with aimodel=aimodel %}
+        {% endfor %}
+    {% endif %}
+    {% if prompts %}
+        {% for prompt in prompts %}
+            {% include "prompt/card.html" with prompt=prompt %}
+        {% endfor %}
+    {% endif %}
+    {% if not aimodels and not prompts %}
+        <p>No AI models or prompts found in this directory or its subdirectories.</p>
+    {% endif %}
+</div>

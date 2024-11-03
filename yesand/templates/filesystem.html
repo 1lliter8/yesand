@@ -1,81 +1,113 @@
 {% load bootstrap_icons %}
+{% load custom_filters %}
 {% load mathfilters %}
-{% if level == 0 %}<div id="filesystem">{% endif %}
-    <ul class="list-group">
-        {% for item in filesystem %}
-            <li class="list-group-item bg-transparent p-0">
-                <div class="d-flex justify-content-between align-items-center position-relative w-100 ps-{{ level|add:2 }} pe-5 py-2">
+{% with level=level|default:0 %}
+    {% if level == 0 %}<div id="filesystem">{% endif %}
+        {% for node in filesystem %}
+            <div class="d-flex justify-content-between align-items-center position-relative w-100 ps-{{ level|add:2 }} pe-5 py-2">
+                <div class="d-flex align-items-center overflow-hidden">
+                    <a href="#"
+                       class="update-breadcrumb text-decoration-none d-flex align-items-center text-truncate"
+                       hx-get="{% url 'get_content' 'dirnode' node.id %}"
+                       hx-target="#content"
+                       hx-trigger="click"
+                       hx-push-url="true"
+                       hx-on:click="updateBreadcrumb('dirnode', {{ node.id }})"
+                       node-type="dirnode"
+                       node-id="{{ node.id }}">
+                        {% bs_icon 'folder' extra_classes='me-2 flex-shrink-0' %}
+                        <span class="text-truncate">{{ node.display }}</span>
+                    </a>
+                </div>
+                <div class="position-absolute end-0 me-2">{% include 'dirnode/dropdown.html' with node_id=node.id %}</div>
+            </div>
+            {% for aimodel in node.aimodels.all %}
+                <div class="d-flex justify-content-between align-items-center position-relative w-100 ps-{{ level|add:3 }} pe-5 py-2">
                     <div class="d-flex align-items-center overflow-hidden">
                         <a href="#"
-                           class="text-decoration-none d-flex align-items-center text-truncate"
-                           hx-get="{% url item.type %}?action=view&id={{ item.id }}"
-                           hx-target="#main-project-content"
-                           hx-push-url="true">
-                            {% if item.type == 'dir' %}
-                                {% bs_icon 'folder' extra_classes='me-2 flex-shrink-0' %}
-                            {% elif item.type == 'prompt' %}
-                                {% bs_icon 'chat' extra_classes='me-2 flex-shrink-0' %}
-                            {% elif item.type == 'aimodel' %}
-                                {% bs_icon 'robot' extra_classes='me-2 flex-shrink-0' %}
-                            {% endif %}
-                            <span class="text-truncate">{{ item.display }}</span>
+                           class="update-breadcrumb text-decoration-none d-flex align-items-center text-truncate"
+                           hx-get="{% url 'get_content' 'aimodel' aimodel.id %}"
+                           hx-target="#content"
+                           hx-trigger="click"
+                           hx-push-url="true"
+                           hx-on:click="updateBreadcrumb('aimodel', {{ aimodel.id }})"
+                           node-type="aimodel"
+                           node-id="{{ aimodel.id }}">
+                            {% bs_icon 'robot' extra_classes='me-2 flex-shrink-0' %}
+                            <span class="text-truncate">{{ aimodel.display }}</span>
                         </a>
                     </div>
-                    <div class="position-absolute end-0 me-2">
-                        <div class="dropdown">
-                            <button class="btn btn-sm"
-                                    type="button"
-                                    id="dropdownMenuButton-{{ item.id }}"
-                                    data-bs-toggle="dropdown"
-                                    aria-expanded="false">{% bs_icon 'chevron-down' %}</button>
-                            <ul class="dropdown-menu dropdown-menu-end"
-                                aria-labelledby="dropdownMenuButton-{{ item.id }}">
-                                {% include "modal/dropdown.html" with item=item %}
-                            </ul>
-                        </div>
-                    </div>
+                    <div class="position-absolute end-0 me-2">{% include 'ai/dropdown.html' with node_id=aimodel.id %}</div>
                 </div>
-                {% include 'filesystem.html' with filesystem=item.children level=level|add:1 %}
-            </li>
+            {% endfor %}
+            {% for prompt in node.prompts.all %}
+                <div class="d-flex justify-content-between align-items-center position-relative w-100 ps-{{ level|add:3 }} pe-5 py-2">
+                    <div class="d-flex align-items-center overflow-hidden">
+                        <a href="#"
+                           class="update-breadcrumb text-decoration-none d-flex align-items-center text-truncate"
+                           hx-get="{% url 'get_content' 'prompt' prompt.id %}"
+                           hx-target="#content"
+                           hx-trigger="click"
+                           hx-push-url="true"
+                           hx-on:click="updateBreadcrumb('prompt', {{ prompt.id }})"
+                           node-type="prompt"
+                           node-id="{{ prompt.id }}">
+                            {% bs_icon 'chat' extra_classes='me-2 flex-shrink-0' %}
+                            <span class="text-truncate">{{ prompt.display }}</span>
+                        </a>
+                    </div>
+                    <div class="position-absolute end-0 me-2">{% include 'prompt/dropdown.html' with node_id=prompt.id %}</div>
+                </div>
+            {% endfor %}
+            {% if node.get_children %}
+                {% include 'filesystem.html' with filesystem=node.get_children level=level|add:1 %}
+            {% endif %}
         {% endfor %}
-    </ul>
-    {% if level == 0 %}
-        <hr class="mt-3 mb-0" />
-        <div class="d-flex justify-content-center my-1">
-            <div class="dropdown">
-                <button class="btn btn-sm"
-                        type="button"
-                        id="dropdownMenuButton-add"
-                        data-bs-toggle="dropdown"
-                        aria-expanded="false">{% bs_icon 'plus' %}</button>
-                <ul class="dropdown-menu dropdown-menu-end"
-                    aria-labelledby="dropdownMenuButton-add">
-                    <li>
-                        <a class="dropdown-item"
-                           href="#"
-                           hx-get="{% url 'dir' %}?action=add"
-                           hx-target="#modal-content"
-                           data-bs-toggle="modal"
-                           data-bs-target="#itemModal">{% bs_icon 'plus' extra_classes='me-2' %} Add new root directory</a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item"
-                           href="#"
-                           hx-get="{% url 'prompt' %}?action=add"
-                           hx-target="#modal-content"
-                           data-bs-toggle="modal"
-                           data-bs-target="#itemModal">{% bs_icon 'chat-dots' extra_classes='me-2' %} Add new prompt</a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item"
-                           href="#"
-                           hx-get="{% url 'aimodel' %}?action=add"
-                           hx-target="#modal-content"
-                           data-bs-toggle="modal"
-                           data-bs-target="#itemModal">{% bs_icon 'robot' extra_classes='me-2' %} Add new AI model</a>
-                    </li>
-                </ul>
+        {% if level == 0 %}
+            <hr>
+            <div class="d-flex justify-content-center my-1">
+                <div class="dropdown">
+                    <button type="button"
+                            class="btn btn-link btn-sm text-dark p-0"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false">{% bs_icon 'plus' %}</button>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item"
+                               href="#"
+                               hx-get="{% url 'modal_no_node' node_type='dirnode' action='add' %}"
+                               hx-target="#modal-content"
+                               data-bs-toggle="modal"
+                               data-bs-target="#itemModal">
+                                {% bs_icon 'folder-plus' extra_classes='me-2' %}
+                                Add directory
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item"
+                               href="#"
+                               hx-get="{% url 'modal_no_node' node_type='prompt' action='add' %}"
+                               hx-target="#modal-content"
+                               data-bs-toggle="modal"
+                               data-bs-target="#itemModal">
+                                {% bs_icon 'chat-dots' extra_classes='me-2' %}
+                                Add prompt
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item"
+                               href="#"
+                               hx-get="{% url 'modal_no_node' node_type='aimodel' action='add' %}"
+                               hx-target="#modal-content"
+                               data-bs-toggle="modal"
+                               data-bs-target="#itemModal">
+                                {% bs_icon 'robot' extra_classes='me-2' %}
+                                Add AI model
+                            </a>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
-    </div>
-{% endif %}
+    {% endif %}
+{% endwith %}

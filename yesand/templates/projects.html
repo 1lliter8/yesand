@@ -2,23 +2,31 @@
 {% load django_bootstrap5 %}
 {% load bootstrap_icons %}
 {% block bootstrap5_content %}
-    <div class="container-fluid">
+    <div id="projects" class="container-fluid">
         <div class="row mt-3">
-            <nav id="sidebar"
-                 class="col-md-3 col-lg-2 d-md-block sidebar vh-100 overflow-auto">
-                <div class="position-sticky">{% include "filesystem.html" with filesystem=filesystem level=0 %}</div>
-            </nav>
-            <main id="main-project-content"
-                  class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-                {% if dir %}
-                    {% include "dir/dir.html" with dir=dir prompts=prompts aimodels=aimodels %}
-                {% elif prompt %}
-                    {% include "prompt/card.html" with prompt=prompt %}
-                {% elif aimodel %}
-                    {% include "ai/card.html" with aimodel=aimodel %}
-                {% else %}
+            <!-- Filesystem sidebar -->
+            <div id="filesystem"
+                 class="col-md-3 col-lg-2 position-sticky z-3"
+                 hx-get="{% url 'get_filesystem' %}"
+                 hx-trigger="load, filesystemChanged from:body"></div>
+            <!-- Main content -->
+            <main class="col-md-9 col-lg-10 ms-sm-auto px-md-4 z-0">
+                <!-- Breadcrumb navigation -->
+                <div id="breadcrumb">
+                    <!-- Initial breadcrumb -->
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb d-flex align-items-center">
+                            <li class="breadcrumb-item d-flex align-items-center active">
+                                <a href="{% url 'projects' %}" class="d-flex align-items-center">{% bs_icon 'folder' %}</a>
+                            </li>
+                        </ol>
+                    </nav>
+                </div>
+                <!-- Content area -->
+                <div id="content">
+                    <!-- Initial welcome content -->
                     {% include "welcome.html" %}
-                {% endif %}
+                </div>
             </main>
         </div>
     </div>
@@ -38,7 +46,37 @@
     </div>
 {% endblock %}
 {% block extra_js %}
-    <!-- Modal javascript -->
+    <!-- Filesystem and breadcrumb trail -->
+    <script>
+    function updateBreadcrumb(nodeType, nodeId) {
+        const breadcrumbUrl = `{% url 'get_breadcrumb' node_type='placeholder_type' node_id=0 %}`.replace('placeholder_type', nodeType).replace('0', nodeId);
+        htmx.ajax('GET', breadcrumbUrl, {target: '#breadcrumb'});
+    }
+    
+    // Add event listener for breadcrumb updates
+    document.addEventListener('click', function(e) {
+        if (e.target.matches('.update-breadcrumb')) {
+            const nodeType = e.target.dataset.nodeType;
+            const nodeId = e.target.dataset.nodeId;
+            updateBreadcrumb(nodeType, nodeId);
+        }
+    });
+    
+    // Listen for form submissions that modify data
+    document.body.addEventListener('htmx:afterRequest', function(evt) {
+        if (evt.detail.successful && evt.detail.pathInfo.requestPath.includes('save')) {
+            // Trigger updates
+            htmx.trigger(document.body, 'filesystemChanged');
+            
+            // Close modal if open
+            var modal = bootstrap.Modal.getInstance(document.getElementById('itemModal'));
+            if (modal) {
+                modal.hide();
+            }
+        }
+    });
+    </script>
+    <!-- Modal -->
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         var itemModal = document.getElementById('itemModal');
@@ -61,7 +99,7 @@
         });
     });
     </script>
-    <!-- Text field autoresize javascript -->
+    <!-- Text field autoresize -->
     <script>
     function autoResize(textarea) {
          textarea.style.height = 'auto';

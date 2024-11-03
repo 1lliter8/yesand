@@ -9,10 +9,33 @@ from yesand import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', api.urls),
-    path('', views.ProjectView.as_view(), name='index'),
-    path('dir/', views.DirView.as_view(), name='dir'),
-    path('prompt/', views.PromptView.as_view(), name='prompt'),
-    path('aimodel/', views.AIView.as_view(), name='aimodel'),
+    path('', views.ProjectsView.as_view(), name='projects'),
+    path('filesystem/', views.TreeView.get_filesystem, name='get_filesystem'),
+    path(
+        'breadcrumb/<str:node_type>/<int:node_id>/',
+        views.TreeView.get_breadcrumb,
+        name='get_breadcrumb',
+    ),
+    path(
+        'content/<str:node_type>/<int:node_id>/',
+        views.TreeView.get_content,
+        name='get_content',
+    ),
+    path(
+        'modal/<str:node_type>/<str:action>/',
+        views.ModalView.handle_modal,
+        name='modal_no_node',
+    ),
+    path(
+        'modal/<str:node_type>/<str:action>/<int:node_id>/',
+        views.ModalView.handle_modal,
+        name='modal_with_node',
+    ),
+    path(
+        'edit/<str:node_type>/<int:node_id>/',
+        views.TreeView.edit_node,
+        name='edit_node',
+    ),
 ]
 
 if settings.DEBUG:
