@@ -11,7 +11,9 @@ from .forms import (
     CopyForm,
     DeleteForm,
     MoveForm,
-    RenameForm,
+    RenameAIModelForm,
+    RenameDirNodeForm,
+    RenamePromptForm,
 )
 from .models import AIModel, DirNode, Prompt
 
@@ -87,9 +89,9 @@ class ModalView:
     """Handle all modal-related operations."""
 
     NODES = {
-        'dirnode': NodeType(DirNode, 'Directory'),
-        'aimodel': NodeType(AIModel, 'AI Model'),
-        'prompt': NodeType(Prompt, 'Prompt'),
+        'dirnode': NodeType(DirNode, 'directory'),
+        'aimodel': NodeType(AIModel, 'AI model'),
+        'prompt': NodeType(Prompt, 'prompt'),
     }
 
     ACTIONS = {
@@ -101,7 +103,14 @@ class ModalView:
                 'prompt': AddPromptForm,
             },
         ),
-        'rename': Action('Rename', RenameForm),
+        'rename': Action(
+            'Rename',
+            {
+                'dirnode': RenameDirNodeForm,
+                'aimodel': RenameAIModelForm,
+                'prompt': RenamePromptForm,
+            },
+        ),
         'move': Action('Move', MoveForm),
         'copy': Action('Copy', CopyForm),
         'delete': Action('Delete', DeleteForm),
@@ -120,8 +129,7 @@ class ModalView:
                 initial['parent_id'] = parent_id
             return action_config.form[node_type](data, initial=initial)
         elif action == 'rename':
-            form_class = action_config.form
-            form_class.Meta.model = cls.NODES[node_type].model
+            form_class = action_config.form[node_type]
             instance = get_object_or_404(cls.NODES[node_type].model, id=node_id)
             return form_class(data, instance=instance)
         elif action in ['move', 'copy']:

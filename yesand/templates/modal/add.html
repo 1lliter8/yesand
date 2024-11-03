@@ -2,7 +2,6 @@
 {% block modal_content %}
     {% if form.parent_id %}{{ form.parent_id }}{% endif %}
     <div class="mb-3">
-        <label for="id_display" class="form-label">Name</label>
         {{ form.display }}
         {% if form.display.errors %}<div class="invalid-feedback">{{ form.display.errors|join:', ' }}</div>{% endif %}
     </div>

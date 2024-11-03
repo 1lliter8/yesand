@@ -15,7 +15,7 @@ class DisplayNameForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['display'].widget.attrs.update(
-            {'class': 'form-control', 'placeholder': 'Enter name'}
+            {'class': 'form-control', 'placeholder': 'Enter display name'}
         )
 
 
@@ -96,11 +96,27 @@ class AddPromptForm(DisplayNameForm):
         return instance
 
 
-class RenameForm(DisplayNameForm):
-    """Form for rename operations."""
+class RenameAIModelForm(DisplayNameForm):
+    """Form for renaming AI Models."""
 
-    class Meta:
-        model = None  # Set dynamically in view
+    class Meta(DisplayNameForm.Meta):
+        model = AIModel
+        fields = ['display']
+
+
+class RenamePromptForm(DisplayNameForm):
+    """Form for renaming Prompts."""
+
+    class Meta(DisplayNameForm.Meta):
+        model = Prompt
+        fields = ['display']
+
+
+class RenameDirNodeForm(DisplayNameForm):
+    """Form for renaming Directories."""
+
+    class Meta(DisplayNameForm.Meta):
+        model = DirNode
         fields = ['display']
 
 
