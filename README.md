@@ -51,7 +51,7 @@ docker compose up -d
 
 This will start the yes& application with a PostgreSQL database, available at `http://localhost:8000`.
 
-> ![NOTE]
+> [!IMPORTANT]
 > Remember to change the default database credentials in a production environment.
 
 ## API
