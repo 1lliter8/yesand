@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "yesand"
-version = "0.1.0"
-description = ""
+version = "0.0.0"  # Handled by poetry-dynamic-versioning
+description = "A lightweight, minimal prompt database and webapp that aims to keep you creative."
 authors = ["Will Langdale <willdon@gmail.com>"]
 readme = "README.md"
 
@@ -18,6 +18,9 @@ django-json-widget = "^2.0.1"
 django-treebeard = "^4.7.1"
 graphene-django = "^3.2.2"
 django-filter = "^24.3"
+python-dotenv = "^1.0.1"
+gunicorn = "^23.0.0"
+psycopg = "^3.2.3"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.6.8"
@@ -25,9 +28,14 @@ pytest = "^8.3.3"
 poethepoet = "^0.29.0"
 djlint = "^1.35.2"
 
+[tool.poetry-dynamic-versioning]
+enable = true
+vcs = "git"
+style = "semver"
+
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning>=1.0.0,<2.0.0"]
+build-backend = "poetry_dynamic_versioning.backend"
 
 [tool.ruff]
 line-length = 88
@@ -70,8 +78,8 @@ _resetdb = "rm -rf db.sqlite3"
 _bootstrap_admin = "poetry run python manage.py loaddata admin_interface_theme_bootstrap.json"
 
 [tool.poe.tasks.test]
-cmd = "pytest -v"
-help = "Run tests with pytest"
+cmd = "poetry run python manage.py test"
+help = "Run local tests with Django"
 
 [tool.poe.tasks.format]
 sequence = ["_check", "_format", "_djangoformat"]
@@ -111,3 +119,56 @@ help = "Reset the database, migrate, reskin admin, make a new superuser."
 [tool.poe.tasks.tree]
 cmd = "tree -I '__*'"
 help = "Show the project directory structure. Useful for using LLMs to debug."
+
+[tool.poe.tasks.test_build]
+envfile = ".env"
+cmd = "${DOCKER} build -t yesand:test ."
+help = "Check the image can build."
+
+[tool.poe.tasks.test_db_up]
+envfile = ".env"
+cmd = "${DOCKER} compose up db -d"
+help = "Bring the test database up."
+
+[tool.poe.tasks.test_deploy]
+envfile = ".env"
+cmd = """
+  ${DOCKER} run -d --name yesand --replace --network host \
+    -e DB_ENGINE=django.db.backends.postgresql \
+    -e DB_NAME=yesand \
+    -e DB_USER=yesand \
+    -e DB_PASSWORD=yesand \
+    -e DB_HOST=localhost \
+    -e DB_PORT=5432 \
+    yesand:test
+"""
+help = "Check the image can deploy and connect to a database."
+
+[tool.poe.tasks.test_run]
+envfile = ".env"
+cmd = "${DOCKER} exec yesand poetry run python manage.py test"
+help = "Run Django tests in the container."
+
+[tool.poe.tasks.stop_db]
+envfile = ".env"
+cmd = "${DOCKER} compose down db"
+help = "Stop the test database."
+
+[tool.poe.tasks.stop_app]
+envfile = ".env"
+cmd = "${DOCKER} stop yesand"
+help = "Stop the test app."
+
+[tool.poe.tasks.stop]
+sequence = ["stop_db", "stop_app"]
+help = "Stop the app and database."
+
+[tool.poe.tasks.test_all]
+sequence = [
+  "test_build", 
+  "test_db_up", 
+  "test_deploy",
+  "test_run",
+  "stop"
+]
+help = "Build a test image, bring up a test database, run tests, bring down the test database."

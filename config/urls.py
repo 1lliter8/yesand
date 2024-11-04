@@ -9,7 +9,8 @@ from yesand import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('graphql/', csrf_exempt(GraphQLView.as_view(graphiql=True))),
+    path('health/', views.health_check, name='health'),
+    path('graphql/', csrf_exempt(GraphQLView.as_view(graphiql=True)), name='api'),
     path('', views.ProjectsView.as_view(), name='projects'),
     path('filesystem/', views.TreeView.get_filesystem, name='get_filesystem'),
     path(

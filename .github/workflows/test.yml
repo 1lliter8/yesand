@@ -1,0 +1,41 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-postgres:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_DB: test_db
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Build and test
+      run: |
+        docker build -t yesand:test .
+        docker run --network host \
+          -e DB_ENGINE=django.db.backends.postgresql \
+          -e DB_NAME=test_db \
+          -e DB_USER=test_user \
+          -e DB_PASSWORD=test_password \
+          -e DB_HOST=localhost \
+          -e DB_PORT=5432 \
+          yesand:test python manage.py test

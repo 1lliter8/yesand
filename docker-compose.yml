@@ -1,0 +1,31 @@
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings
+      - DB_ENGINE=${DB_ENGINE:-django.db.backends.sqlite3}
+      - DB_NAME=${DB_NAME:-db.sqlite3}
+      - DB_USER=${DB_USER:-}
+      - DB_PASSWORD=${DB_PASSWORD:-}
+      - DB_HOST=${DB_HOST:-}
+      - DB_PORT=${DB_PORT:-}
+    volumes:
+      - .:/yesand
+    depends_on:
+      - db
+    
+  db:
+    image: postgres:14
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=${DB_NAME:-yesand}
+      - POSTGRES_USER=${DB_USER:-yesand}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-yesand}
+    volumes:
+      - postgresql:/var/lib/postgresql/data
+
+volumes:
+  postgresql:
