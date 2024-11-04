@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*.*.*"
   workflow_dispatch:
     inputs:
       version:
@@ -39,3 +39,10 @@ jobs:
         tags: |
           illiter8/yesand:latest
           illiter8/yesand:${{ env.VERSION }}
+
+    - name: Release
+      uses: softprops/action-gh-release@v2
+      with:
+        name: Release ${{ env.VERSION }}
+        tag_name: v${{ env.VERSION }}
+        generate_release_notes: true
