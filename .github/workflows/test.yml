@@ -31,7 +31,7 @@ jobs:
     - name: Build and test
       run: |
         docker build -t yesand:test .
-        docker run -d --name yesand --replace --network host \
+        docker run -d --name yesand --network host \
           -e DB_ENGINE=django.db.backends.postgresql \
           -e DB_NAME=test_db \
           -e DB_USER=test_user \

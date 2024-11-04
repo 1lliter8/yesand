@@ -133,7 +133,7 @@ help = "Bring the test database up."
 [tool.poe.tasks.test_deploy]
 envfile = ".env"
 cmd = """
-  ${DOCKER} run -d --name yesand --replace --network host \
+  ${DOCKER} run -d --name yesand --network host \
     -e DB_ENGINE=django.db.backends.postgresql \
     -e DB_NAME=yesand \
     -e DB_USER=yesand \
@@ -156,7 +156,7 @@ help = "Stop the test database."
 
 [tool.poe.tasks.stop_app]
 envfile = ".env"
-cmd = "${DOCKER} stop yesand"
+cmd = "${DOCKER} rm -f yesand"
 help = "Stop the test app."
 
 [tool.poe.tasks.stop]
@@ -167,6 +167,7 @@ help = "Stop the app and database."
 sequence = [
   "test_build", 
   "test_db_up", 
+  "stop_app",
   "test_deploy",
   "test_run",
   "stop"
