@@ -19,6 +19,7 @@ jobs:
           fetch-depth: 0
       
       - name: Bump version and push tag
+        id: tag_version
         uses: anothrNick/github-tag-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -26,7 +27,7 @@ jobs:
           DEFAULT_BUMP: patch
 
       - name: Trigger release workflow
-        if: steps.bump_version.outputs.new_tag
+        if: steps.tag_version.outputs.new_tag != ''
         uses: yakubique/trigger-github-workflow@v1
         with:
           repository: ${{ github.repository }}
@@ -35,5 +36,5 @@ jobs:
           ref: main
           params: |
             {
-              "version": "${{ steps.bump_version.outputs.tag }}"
+              "version": "${{ steps.tag_version.outputs.tag }}"
             }
