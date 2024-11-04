@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      actions: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -23,3 +24,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           WITH_V: true
           DEFAULT_BUMP: patch
+
+      - name: Trigger release workflow
+        if: steps.bump_version.outputs.new_tag
+        uses: yakubique/trigger-github-workflow@v1
+        with:
+          repository: ${{ github.repository }}
+          workflow: release.yml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: main
+          params: |
+            {
+              "version": "${{ steps.bump_version.outputs.tag }}"
+            }
