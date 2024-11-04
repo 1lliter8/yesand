@@ -1,9 +1,11 @@
 import logging
 from collections import namedtuple
 
-from django.http import Http404
+from django.forms import Form
+from django.http import Http404, HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.generic import TemplateView
+from treebeard.mp_tree import MP_NodeQuerySet
 
 from .forms import (
     AddAIModelForm,
@@ -27,7 +29,7 @@ Action = namedtuple('Action', ['name', 'form'])
 class ProjectsView(TemplateView):
     template_name = 'projects.html'
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs) -> MP_NodeQuerySet:
         context = super().get_context_data(**kwargs)
         context['root_nodes'] = DirNode.get_root_nodes()
         return context
@@ -37,7 +39,7 @@ class TreeView:
     """Handles tree structure display and navigation."""
 
     @staticmethod
-    def get_filesystem(request):
+    def get_filesystem(request: HttpRequest) -> HttpResponse:
         """Returns the complete filesystem as HTML"""
         root_nodes = DirNode.get_root_nodes()
         return render(
@@ -45,7 +47,9 @@ class TreeView:
         )
 
     @staticmethod
-    def get_breadcrumb(request, node_type, node_id):
+    def get_breadcrumb(
+        request: HttpRequest, node_type: str, node_id: int
+    ) -> HttpResponse:
         """Returns breadcrumb HTML for any node type"""
         if node_type == 'dirnode':
             node = get_object_or_404(DirNode, id=node_id)
@@ -60,7 +64,7 @@ class TreeView:
         )
 
     @staticmethod
-    def get_content(request, node_type, node_id):
+    def get_content(request: HttpRequest, node_type: str, node_id: int) -> HttpResponse:
         """Returns main content HTML for any node type"""
         # If this is a modal action, delegate to ModalView
         if action := request.GET.get('action'):
@@ -88,7 +92,7 @@ class TreeView:
             return render(request, template, {node_type: node})
 
     @staticmethod
-    def edit_node(request, node_type, node_id):
+    def edit_node(request: HttpRequest, node_type: str, node_id: int) -> HttpResponse:
         """Handle both GET (show form) and POST (save changes) for editing."""
         if node_type == 'aimodel':
             model = AIModel
@@ -147,7 +151,13 @@ class ModalView:
     }
 
     @classmethod
-    def _get_form(cls, request, node_type, action, node_id=None):
+    def _get_form(
+        cls: type['ModalView'],
+        request: HttpRequest,
+        node_type: str,
+        action: str,
+        node_id: int | None = None,
+    ) -> Form:
         """Get a form instance, either from POST data or empty."""
         action_config = cls.ACTIONS[action]
         is_post = request.method == 'POST'
@@ -195,7 +205,7 @@ class ModalView:
         return None
 
     @staticmethod
-    def _copy_directory_tree(node: DirNode, target_dir=None):
+    def _copy_directory_tree(node: DirNode, target_dir: int | None = None) -> DirNode:
         """
         Recursively copy a directory and all its contents.
 
@@ -229,7 +239,14 @@ class ModalView:
         return new_dir
 
     @classmethod
-    def _process_action(cls, request, node_type, action, node_id, form=None):
+    def _process_action(
+        cls: type['ModalView'],
+        request: HttpRequest,
+        node_type: str,
+        action: str,
+        node_id: int,
+        form: Form | None = None,
+    ) -> HttpResponse:
         """Process any modal action and return appropriate response."""
         model = cls.NODES[node_type].model
         node = get_object_or_404(model, id=node_id) if node_id else None
@@ -306,7 +323,13 @@ class ModalView:
         return response
 
     @classmethod
-    def handle_modal(cls, request, node_type, action, node_id=None):
+    def handle_modal(
+        cls: type['ModalView'],
+        request: HttpRequest,
+        node_type: str,
+        action: str,
+        node_id: int | None = None,
+    ) -> HttpResponse:
         """Single entry point for all modal operations."""
         form = cls._get_form(request, node_type, action, node_id)
         context = {
@@ -328,6 +351,12 @@ class ModalView:
                     form.add_error(None, str(e))
 
         response = render(request, f'modal/{action}.html', context)
+
         if request.method == 'POST':
             response.status_code = 422
+
         return response
+
+
+def health_check(request: HttpRequest) -> JsonResponse:
+    return JsonResponse({'status': 'healthy'})

@@ -1,0 +1,36 @@
+name: Bump version
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      
+      - name: Get latest tag
+        id: latest_tag
+        run: |
+          tag=$(git describe --tags `git rev-list --tags --max-count=1` 2>/dev/null || echo "v0.0.0")
+          echo "CURRENT_TAG=$tag" >> $GITHUB_ENV
+      
+      - name: Bump version
+        id: bump_version
+        run: |
+          current=${CURRENT_TAG#v}
+          IFS='.' read -ra ADDR <<< "$current"
+          new_patch=$((ADDR[2] + 1))
+          new_version="${ADDR[0]}.${ADDR[1]}.$new_patch"
+          echo "NEW_VERSION=v$new_version" >> $GITHUB_ENV
+      
+      - name: Create tag
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git tag -a ${{ env.NEW_VERSION }} -m "Automated version bump to ${{ env.NEW_VERSION }}"
+          git push origin ${{ env.NEW_VERSION }}

@@ -9,6 +9,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 import environ
@@ -17,17 +18,19 @@ env = environ.Env()
 environ.Env.read_env()
 
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# Base settings
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
+SECRET_KEY = os.getenv(
+    'SECRET_KEY', 'django-insecure-7^$+*6e5+-hq-y6$%&#)&jwqtokyn*jk8kcclqv-fjps6t7o&e'
+)
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-7^$+*6e5+-hq-y6$%&#)&jwqtokyn*jk8kcclqv-fjps6t7o&e'
+SESSION_COOKIE_SECURE = bool(os.getenv('SESSION_COOKIE_SECURE', 'False'))
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+CSRF_COOKIE_SECURE = bool(os.getenv('CSRF_COOKIE_SECURE', 'False'))
+
+DEBUG = bool(os.getenv('DEBUG', 'True'))
 
 ALLOWED_HOSTS = []
 
@@ -89,8 +92,12 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.sqlite3'),
+        'NAME': os.getenv('DB_NAME', os.path.join(BASE_DIR, 'db.sqlite3')),
+        'USER': os.getenv('DB_USER', ''),
+        'PASSWORD': os.getenv('DB_PASSWORD', ''),
+        'HOST': os.getenv('DB_HOST', ''),
+        'PORT': os.getenv('DB_PORT', ''),
     }
 }
 
@@ -140,6 +147,7 @@ STATICFILES_DIRS = [
 
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
@@ -152,12 +160,14 @@ BOOTSTRAP5 = {
     'javascript_in_head': False,
 }
 
-# Options for the admin interface
+
+# Admin
 
 X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 SILENCED_SYSTEM_CHECKS = ['security.W019']
 
-# GraphQL settings
+
+# GraphQL
 
 GRAPHENE = {'SCHEMA': 'api.schema.schema'}
